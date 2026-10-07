@@ -42,7 +42,9 @@
                             <td>{{ $item ['kategori']}}</td>
                             <td>{{ number_format($item ['stok'])}} pcs</td>
                             <td>Rp. {{ number_format($item ['harga']) }}</td>
-                            <td></td>
+                            <td>
+                                <x-kartu-stok nomor_sku="{{ $item['nomor_sku'] }}" />
+                            </td>
                         </tr>
                     @empty
                     <tr>
