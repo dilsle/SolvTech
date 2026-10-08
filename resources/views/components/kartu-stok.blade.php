@@ -40,6 +40,18 @@
     <script>
         $(document).ready(function () {
 
+            let currentNomorSku = null;
+
+            function transaksiColor(value) {
+                switch (value) {
+                    case 'in' : return 'bg-success';
+                    case 'out' : return 'bg-danger';
+                    case 'adjustment' : return 'bg-secondary';
+
+                    default : return 'bg-warning';
+
+                }
+            }
             function loadKartuStok(nomorSku, pageUrl = null) {
                 const url = pageUrl || `/kartu-stok/${nomorSku}`;
                 const $tbody =$("#table-kartu-stok tbody");
@@ -49,24 +61,85 @@
                 $.ajax({
                     type: "GET",
                     url: url,
+
                     success: function (response) {
                         $tbody.empty();
-                        console.log(response);
+                        console.log("RESPONSE:", response);
                         const logger = response.data;
 
-                       if (logger.length === 0) {
-                            $tbody.html('<tr><td colspan="8" class="text-center">Data Log Kosong</td></tr>');
+                        if (logger.length === 0) {
+                            $tbody.html(`<tr><td colspan="8" class="text-center"> Data Log Kosong</td></tr>`);
                         }
+
+                        logger.forEach((item, index) =>{
+                            $tbody.append(`
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.tanggal}</td>
+                                    <td>${item.nomor_transaksi ?? '-'}</td>
+                                    <td>
+                                        <span class='badge ${transaksiColor(item.jenis_transaksi)} fw-bolf text-uppercase'>
+                                            ${item.jenis_transaksi}
+                                        </span>
+                                    </td>
+                                    <td>${item.jumlah_keluar ?? '-'}</td>
+                                    <td>${item.jumlah_masuk ?? '-'}</td>
+                                    <td>${item.stok_akhir}</td>
+                                    <td>${item.petugas}</td>
+                                </tr>
+                            `);
+                        });
+
+                        if(response.meta.total > response.meta.per_page) {
+                            const meta = response.meta;
+
+                            let paginationHtml = '<nav><ul class="pagination justify-content-center gap-1">'
+                                meta.links.forEach( link => {
+                                    const isNumber = /^\d+$/.test(link.label);
+                                    if(!isNumber) return;
+
+                                    paginationHtml += `
+                                        <li class="page-item">
+                                            <a class="page-link ${link.active ? 'bg-dark text-white' : ''}" href="${link.url}">
+                                            ${link.label}
+                                            </a>
+                                        </li>
+                                    `
+                                    })
+                                    paginationHtml += '</ul></nav>';
+                                    $pagination.html(paginationHtml);
+                        }
+                    },
+
+                    error: function (xhr) {
+                        console.log("STATUS:", xhr.status);
+                        console.log("ERROR:", xhr.responseText);
+
+                        $tbody.html(`
+                            <tr>
+                                <td colspan="8" class="text-center text-danger">
+                                    Gagal mengambil data kartu stok
+                                </td>
+                            </tr>
+                        `);
                     }
                 });
             }
 
 
             $(document).on("click", ".btn-kartu-stok", function () {
-                let currentNomorSku = $(this).data('nomor-sku');
-
+                currentNomorSku = $(this).data('nomor-sku');
                 loadKartuStok(currentNomorSku);
             });
+
+            $(document).on('click', '#pagination-kartu-stok a.page-link', function (e) {
+                e.preventDefault();
+
+                const pageUrl = $(this).attr('href');
+                if(pageUrl && currentNomorSku) {
+                    loadKartuStok(currentNomorSku, pageUrl);
+                }
+            })
 
 
         });

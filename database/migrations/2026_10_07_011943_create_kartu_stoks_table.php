@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('nomor_transaksi')->nullable();
             $table->enum('jenis_transaksi', ['in', 'out', 'adjustment', 'retur']);
             $table->string('nomor_sku');
-            $table->integer('jumlah_masuk');
-            $table->integer('jumlah_keluar');
+            $table->integer('jumlah_masuk')->nullable();
+            $table->integer('jumlah_keluar')->nullable();
             $table->integer('stok_akhir');
             $table->string('petugas');
             $table->timestamps();

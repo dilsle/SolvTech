@@ -10,7 +10,7 @@ class KartuStokController extends Controller
 {
     public function kartuStok($nomor_sku)
     {
-        $query = KartuStok::where('nomor_sku', $nomor_sku)->orderBy('created_at', 'DESC')->paginate(10);
+        $query = KartuStok::where('nomor_sku', $nomor_sku)->orderBy('created_at', 'DESC')->paginate(5);
         return KartuStokResource::collection($query);
     }
 }
