@@ -1,5 +1,6 @@
 <div>
-    <div class="modal fade" id="modalFormVarian" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalFormVarianLabel" aria-hidden="true">
+    <div class="modal fade" id="modalFormVarian" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="modalFormVarianLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form method="POST" enctype="multipart/form-data" action="{{ $action }}">
                 @csrf
