@@ -17,10 +17,12 @@
                     Tambah Varian
                 </button>
             </div>
-            <div class="row mt-2">
 
+            {{-- Bagian Row dan Kolom Varian --}}
+            <div class="row mt-2">
                 @forelse ($produk->varian as $item)
-                <div class="col4">
+                {{-- Diubah dari col4 menjadi col-md-4 agar jadi 3 card sebaris --}}
+                <div class="col-md-4 mb-3">
                     <x-produk.card-varian :varian="$item"/>
                 </div>
                 @empty
@@ -31,11 +33,13 @@
                 </div>
                 @endforelse
             </div>
+
         </div>
     </div>
 </div>
 <x-produk.form-varian/>
 @endsection
+
 @push('script')
     <script>
         $(document).ready(function() {

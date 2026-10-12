@@ -8,6 +8,15 @@
                 <div class="card-header">{{ __('Login') }}</div>
 
                 <div class="card-body">
+
+                    @if ($errors->has('email'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Login Gagal!</strong>
+                            Email atau password yang kamu masukkan salah.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
 
