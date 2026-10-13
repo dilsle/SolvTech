@@ -78,4 +78,25 @@ class VarianProdukController extends Controller
         toast()->success('Data berhasil dihapus');
         return redirect()->route('master-data.produk.show', $varian->produk_id);
     }
+    public function getAllVarianJson()
+    {
+        $search = request()->query('search');
+        $varians = VarianProduk::with('produk')
+            ->where(function($query) use ($search) {
+                $query->where('nama_varian', 'like', '%' . $search . '%')
+                ->orWhere('nomor_sku', 'like', '%' . $search . '%')
+                ->orWhereHas('produk', function ($query) use ($search) {
+                    $query->where('nama_produk', 'like', '%' . $search . '%');
+                });
+            })->get()->map(function ($q) {
+                return [
+                    'id' => $q->id,
+                    'text' => $q->produk->nama_produk . ' - ' . $q->nama_varian,
+                    'harga' => $q->harga_varian,
+                    'stok' => $q->stok_varian,
+                    'nomor_sku' => $q->nomor_sku
+                ];
+            });
+        return response()->json($varians);
+    }
 }
