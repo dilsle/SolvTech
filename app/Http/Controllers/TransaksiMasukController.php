@@ -14,6 +14,11 @@ class TransaksiMasukController extends Controller
     public $pageTitle = 'Transaksi Masuk';
     public $jenisTransaksi = 'pemasukan';
 
+    public function index() {
+        $pageTitle = $this->pageTitle;
+        return view('transaksi-masuk.index', compact('pageTitle'));
+    }
+
     public function create()
     {
         $pageTitle = $this->pageTitle;
