@@ -5,7 +5,7 @@
     <div class="card-body">
         {{-- form --}}
         <form class="row col-12 justify-content-between" id="form-add-produk">
-            <div class="alert alert-danger" id="alert-danger"></div>
+            <div class="alert alert-danger" id="alert-danger" style="box-shadow: none !important"></div>
             <div class="row">
                 <div class="form-group w-25">
                     <label for="pengirim" class="form-label">Pengirim</label>
@@ -60,9 +60,7 @@
                 </tr>
                 <tr>
                     <th colspan="7" class="text-end">
-                        <form id='form-transaksi'>
-                            <button type="submit" class="btn btn-primary">Simpan Transaksi</button>
-                        </form>
+                        <button type="button" class="btn btn-primary" id="btn-simpan-transaksi">Simpan Transaksi</button>
                     </th>
                 </tr>
             </tfoot>
@@ -73,8 +71,7 @@
 @endsection
 @push('script')
     <script>
-    $(document).ready(function () {
-        $("#alert-danger").hide();
+    $(document).ready(function () {$("#alert-danger").hide();
         const numberFormat = new Intl.NumberFormat('id-ID')
         let selectedOption = {};
         let selectedProduk = [];
@@ -105,14 +102,13 @@
                         })
                     }
                 }
-
             }
-        })
+        });
 
         $('#select-produk').on('select2:select', function(e){
             let data = e.params.data;
             selectedOption = data;
-        })
+        });
 
         $("#form-add-produk").on("submit", function (e) {
             e.preventDefault();
@@ -126,7 +122,7 @@
                     title: 'Perhatian',
                     text: 'Input belum lengkap',
                     timer: 3000
-                })
+                });
                 return;
             }
 
@@ -136,7 +132,7 @@
                     title: 'Perhatian',
                     text: 'Qty atau Harga tidak boleh kurang dari 1',
                     timer: 3000
-                })
+                });
                 return;
             }
 
@@ -156,21 +152,26 @@
                     harga: harga,
                     nomor_batch: nomor_batch,
                     subTotal: subTotal,
-                })
+                });
             }
-
 
             $("#select-produk").val(null).trigger('change');
             $("#qty").val('');
             $("#harga").val('');
             $("#nomor_batch").val('');
             renderTable();
+        });
 
+        $(document).on("click", ".btn-delete", function () {
+            let nomorSku = $(this).data('nomor-sku');
+            selectedProduk = selectedProduk.filter(item => item.nomor_sku !== nomorSku);
+            renderTable();
         });
 
         function renderTable() {
             let tableBody = $("#table-produk tbody");
             tableBody.empty();
+
             selectedProduk.forEach((item, index)=>{
                 let row = `
                 <tr>
@@ -181,33 +182,92 @@
                     <td>${numberFormat.format(item.harga)}</td>
                     <td>${numberFormat.format(item.subTotal)}</td>
                     <td>
-                        <button class="btn btn-danger btn-round btn-delete btn-icon" data-nomor-sku="${item.nomor_sku}">
+                        <button type="button" class="btn btn-danger btn-round btn-delete btn-icon" data-nomor-sku="${item.nomor_sku}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
                 </tr>
                 `;
                 tableBody.append(row);
-            })
-
-            $(document).on("click", ".btn-delete", function () {
-                let nomorSku = $(this).data('nomor-sku');
-                selectedProduk = selectedProduk.filter(item => item.nomor_sku !== nomorSku);
-                renderTable();
             });
 
             if(selectedProduk.length === 0) {
-                tableBody.append(`<tr><td colspan="7" class="text-center">Tidak ada data produk</td></tr>`)
+                tableBody.append(`<tr><td colspan="7" class="text-center">Tidak ada data produk</td></tr>`);
             }
 
-            //bikin grand total
             let grandTotal = selectedProduk.reduce((total, item)=> total + item.subTotal, 0);
             $("#grand-total").text(numberFormat.format(grandTotal));
         }
 
         renderTable();
 
+       $("#btn-simpan-transaksi").on("click", function (e) {
+            e.preventDefault();
+            $("#alert-danger").hide().empty();
 
+            if(selectedProduk.length === 0){
+                swal({
+                    icon: 'warning',
+                    title: 'Perhatian',
+                    text: 'Wajib menuliskan 1 produk yang akan dicatat',
+                    timer: 3000
+                });
+                return;
+            }
+
+            $.ajax({
+                method: "POST",
+                url: "{{ route('transaksi-masuk.store') }}",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    items: selectedProduk,
+                    pengirim: $("#pengirim").val(),
+                    kontak: $("#kontak").val(),
+                    keterangan: $("#keterangan").val(),
+                },
+                success: function (response) {
+                    if(response.success){
+                        // Jika menggunakan library toast/sweetalert di client, bisa dipicu di sini
+                        swal({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: 'Transaksi Masuk berhasil ditambahkan',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        setTimeout(function(){
+                            window.location.href = response.redirect_url;
+                        }, 2000);
+                    }
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors;
+                    if(errors){
+                        renderError(errors);
+                    } else {
+                        // Menangkap error 500 dari server agar ketahuan salahnya di mana
+                        swal({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Terjadi kesalahan pada server. Cek console untuk detail.',
+                            timer: 3000
+                        });
+                        console.error(xhr.responseText);
+                    }
+                }
+            });
+        });
+
+        function renderError(errors) {
+            let alertBox = $("#alert-danger");
+            alertBox.empty();
+            Object.values(errors).forEach(err => {
+                err.forEach(msg => {
+                    alertBox.append(`<p class="mb-0">${msg}</p>`);
+                })
+            });
+            alertBox.show();
+        }
     });
     </script>
 @endpush
