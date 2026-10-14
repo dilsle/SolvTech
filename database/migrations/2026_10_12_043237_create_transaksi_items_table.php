@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('produk');
             $table->string('nomor_sku');
             $table->string('nomor_batch')->nullable();
-            $table->string('varian');
+            $table->string('varian')->nullable();
             $table->integer('qty');
             $table->integer('harga');
             $table->integer('sub_total');
