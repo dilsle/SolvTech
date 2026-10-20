@@ -61,6 +61,13 @@ class Sidebar extends Component
 
                 ]
             ],
+            [
+                'label' => 'Laporan Kenaikan Harga',
+                'route' => 'laporan-kenaikan-harga.index',
+                'is_active' => request()->routeIs('laporan-kenaikan-harga.*'),
+                'icon' => 'fas fa-level-up-alt',
+                'is_dropdown' => false
+            ],
         ];
     }
 

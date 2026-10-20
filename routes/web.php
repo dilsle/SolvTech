@@ -7,7 +7,9 @@ use App\Http\Controllers\VarianProdukController;
 use App\Http\Controllers\KartuStokController;
 use App\Http\Controllers\TransaksiMasukController;
 use App\Http\Controllers\ExportLaporanTransaksiController;
+use App\Http\Controllers\LaporanKenaikanHargaController;
 use App\Models\KategoriProduk;
+use App\Models\LaporanKenaikanHarga;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +30,8 @@ Route::middleware('auth')->group(function(){
 
     Route::post('export-laporan-transaksi', [ExportLaporanTransaksiController::class, 'exportLaporanTransaksi'])->name
     ('export-laporan-transaksi');
+
+    Route::resource('laporan-kenaikan-harga', LaporanKenaikanHargaController::class)->only('index', 'update');
 
     Route::prefix('master-data')->name('master-data.')->group(function() {
         Route::resource('kategori-produk', KategoriProdukController::class);
