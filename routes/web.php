@@ -6,6 +6,7 @@ use App\Http\Controllers\StokBarangController;
 use App\Http\Controllers\VarianProdukController;
 use App\Http\Controllers\KartuStokController;
 use App\Http\Controllers\TransaksiMasukController;
+use App\Http\Controllers\ExportLaporanTransaksiController;
 use App\Models\KategoriProduk;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,9 @@ Route::middleware('auth')->group(function(){
     Route::prefix('get-data')->name('get-data.')->group(function () {
         Route::get('/varian-produk', [VarianProdukController::class, 'getAllVarianJson'])->name('varian-produk');
     });
+
+    Route::post('export-laporan-transaksi', [ExportLaporanTransaksiController::class, 'exportLaporanTransaksi'])->name
+    ('export-laporan-transaksi');
 
     Route::prefix('master-data')->name('master-data.')->group(function() {
         Route::resource('kategori-produk', KategoriProdukController::class);
