@@ -7,6 +7,7 @@ use App\Http\Requests\storeTransaksiMasukRequest;
 use App\Models\Transaksi;
 use App\Models\VarianProduk;
 use App\Models\KartuStok;
+use App\Models\LaporanKenaikanHarga;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -75,8 +76,19 @@ class TransaksiMasukController extends Controller
             $parsedText = explode('-', $item['text']);
             $namaProduk = trim($parsedText[0] ?? '');
             $namaVarian = trim($parsedText[1] ?? ''); // Ambil varian jika ada di text select2
-
             $varian = VarianProduk::where('nomor_sku', $item['nomor_sku'])->first();
+
+            if ($item['harga'] > $varian->harga_varian ) {
+                LaporanKenaikanHarga::create([
+                    'nomor_transaksi'   =>$nomorTransaksi,
+                    'nomor_batch'       =>$item['nomor_batch'],
+                    'nomor_sku'         =>$item['nomor_sku'],
+                    'harga_lama'        =>$varian->harga_varian,
+                    'harga_beli'        =>$item['harga'],
+                    'kenaikan_harga'     =>$item['harga'] - $varian->harga_varian,
+                    'jumlah_barang'     =>$item['qty']
+                ]);
+            }
 
             $transaksi->items()->create([
                 'transaksi_id'  => $transaksi->id,
