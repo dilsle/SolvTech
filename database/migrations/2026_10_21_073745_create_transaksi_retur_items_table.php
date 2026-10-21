@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transaksi_returs', function (Blueprint $table) {
+        Schema::create('transaksi_retur_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('transaksi_retur_id')->nullable()->contrained('transaksi_return')->cascadeOnUpdate();
+            $table->foreignId('transaksi_terur_id')->nullable('transaksi-returs')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('produk');
             $table->string('nomor_sku');
             $table->string('nomor_batch');
             $table->string('varian');
-            $table->string('qty');
-            $table->string('harga');
-            $table->string('sub_total');
-            $table->string('note');
+            $table->integer('qty');
+            $table->integer('harga');
+            $table->integer('sub_total');
+            $table->text('note');
             $table->timestamps();
         });
     }
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transaksi_returs');
+        Schema::dropIfExists('transaksi_retur_items');
     }
 };
