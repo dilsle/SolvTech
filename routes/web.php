@@ -6,8 +6,10 @@ use App\Http\Controllers\StokBarangController;
 use App\Http\Controllers\VarianProdukController;
 use App\Http\Controllers\KartuStokController;
 use App\Http\Controllers\TransaksiMasukController;
+use App\Http\Controllers\TransaksiKeluarController;
 use App\Http\Controllers\ExportLaporanTransaksiController;
 use App\Http\Controllers\LaporanKenaikanHargaController;
+use App\Http\Controllers\TransaksiReturController;
 use App\Models\KategoriProduk;
 use App\Models\LaporanKenaikanHarga;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +28,7 @@ Route::middleware('auth')->group(function(){
 
     Route::prefix('get-data')->name('get-data.')->group(function () {
         Route::get('/varian-produk', [VarianProdukController::class, 'getAllVarianJson'])->name('varian-produk');
+        Route::get('/transaksi-keluar', [TransaksiKeluarController::class, 'getTransaksiKeluar'])->name('transaksi-keluar');
     });
 
     Route::post('export-laporan-transaksi', [ExportLaporanTransaksiController::class, 'exportLaporanTransaksi'])->name
@@ -42,4 +45,6 @@ Route::middleware('auth')->group(function(){
 
     Route::get('/kartu-stok/{nomor_sku}', [KartuStokController::class, 'kartuStok'])->name('kartu-stok');
     Route::resource('transaksi-masuk', TransaksiMasukController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('transaksi-keluar', TransaksiKeluarController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('transaksi-retur', TransaksiReturController::class)->only(['index', 'create', 'store', 'show']);
 });

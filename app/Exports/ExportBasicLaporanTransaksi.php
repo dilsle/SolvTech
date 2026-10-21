@@ -31,7 +31,8 @@ class ExportBasicLaporanTransaksi implements FromCollection, WithHeadings, WithC
                 'No'                => $index + 1,
                 'Tanggal Transaksi' => Carbon::parse($item->created_at)->locale('id')->translatedFormat('l, d F Y'),
                 'Nomor Transaksi'   => $item->nomor_transaksi,
-                'Pengirim'          => $item->pengirim,
+                $this->jenisTransaksi == 'pemasukan' ? 'Pengirim' : 'Penerima' => $this->jenisTransaksi == 'pemasukan' ? $item->pengirim :
+                    $item->penerima,
                 'Kontak'            => $item->kontak,
                 'Petugas'           => $item->petugas,
                 'Jumlah Barang'     => $item->jumlah_barang,
@@ -49,7 +50,7 @@ class ExportBasicLaporanTransaksi implements FromCollection, WithHeadings, WithC
             'No',
             'Tanggal Transaksi',
             'Nomor Transaksi',
-            'Pengirim',
+            $this->jenisTransaksi == 'pemasukan' ? 'Pengirim' : 'Penerima',
             'Kontak',
             'Petugas',
             'Jumlah Barang',
