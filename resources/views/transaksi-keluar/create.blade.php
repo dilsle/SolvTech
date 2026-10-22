@@ -43,8 +43,7 @@
                 </div>
             </div>
         </form>
-        {{-- end form --}}
-        {{-- table --}}
+
         <table class="table mt-5" id="table-produk">
             <thead>
                 <tr>

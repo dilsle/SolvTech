@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\VarianProduk;
 use App\Models\KartuStok;
+use App\Models\TransaksiItems;
 use App\Http\Requests\storeTransaksiKeluarRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class TransaksiKeluarController extends Controller
@@ -54,60 +57,168 @@ class TransaksiKeluarController extends Controller
         return view('transaksi-keluar.show', compact('pageTitle', 'transaksi'));
     }
 
+
     public function store(storeTransaksiKeluarRequest $request)
     {
-        $nomorTransaksi = Transaksi::generateNomorTransaksi($this->jenisTransaksi);
-        $items = $request->items;
+        $items = $request->input('items', []);
 
-        $transaksi = Transaksi::create([
-            'nomor_transaksi'   => $nomorTransaksi,
-            'jenis_transaksi'   => $this->jenisTransaksi,
-            'jumlah_barang'     => count($items),
-            'total_harga'       => 0,
-            'keterangan'        => $request->keterangan,
-            'petugas'           => Auth::user()->name,
-            'penerima'          => $request->penerima,
-            'kontak'            => $request->kontak
-        ]);
+        if (empty($items)) {
+            throw ValidationException::withMessages([
+                'items' => 'Minimal harus ada satu produk.'
+            ]);
+        }
 
-        foreach ($items as $item) {
-            $parsedText = explode('-', $item['text']);
-            $namaProduk = trim($parsedText[0] ?? '');
-            $namaVarian = trim($parsedText[1] ?? ''); // Ambil varian jika ada di text select2
-            $varian = VarianProduk::where('nomor_sku', $item['nomor_sku'])->first();
+        return DB::transaction(function () use ($request, $items) {
 
-            if ($varian) {
-                $transaksi->items()->create([
-                    'transaksi_id'  => $transaksi->id,
-                    'produk'        => $namaProduk,
-                    'varian'        => $namaVarian, // Ditambahkan agar tidak error database
-                    'qty'           => $item['qty'],
-                    'harga'         => $varian->harga_varian,
-                    'sub_total'     => $varian->harga_varian * $item['qty'],
-                    'nomor_sku'     => $item['nomor_sku']
-                ]);
+            $nomorTransaksi = Transaksi::generateNomorTransaksi(
+                $this->jenisTransaksi
+            );
 
-                $varian->decrement('stok_varian', $item['qty']);
+            // Validasi stok dan siapkan pembagian batch FIFO
+            $alokasiItems = [];
+            $totalHarga = 0;
+
+            foreach ($items as $item) {
+                $sku = $item['nomor_sku'] ?? null;
+                $qtyDiminta = (int) ($item['qty'] ?? 0);
+
+                if (!$sku || $qtyDiminta < 1) {
+                    throw ValidationException::withMessages([
+                        'items' => 'SKU dan jumlah barang harus valid.'
+                    ]);
+                }
+
+                $varian = VarianProduk::where('nomor_sku', $sku)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$varian) {
+                    throw ValidationException::withMessages([
+                        'items' => "Varian dengan SKU {$sku} tidak ditemukan."
+                    ]);
+                }
+
+                // Ambil batch masuk paling lama terlebih dahulu.
+                // Batch harus memiliki nomor_batch.
+                $batchMasuk = DB::table('transaksi_items as ti')
+                    ->join('transaksis as t', 't.id', '=', 'ti.transaksi_id')
+                    ->where('t.jenis_transaksi', 'pemasukan')
+                    ->where('ti.nomor_sku', $sku)
+                    ->whereNotNull('ti.nomor_batch')
+                    ->where('ti.nomor_batch', '<>', '')
+                    ->select(
+                        'ti.nomor_batch',
+                        DB::raw('SUM(ti.qty) as qty_masuk'),
+                        DB::raw('MIN(t.created_at) as tanggal_masuk')
+                    )
+                    ->groupBy('ti.nomor_batch')
+                    ->orderBy('tanggal_masuk', 'asc')
+                    ->orderBy('ti.nomor_batch', 'asc')
+                    ->get();
+
+                // Hitung jumlah yang sudah keluar dari setiap batch.
+                $batchKeluar = DB::table('transaksi_items as ti')
+                    ->join('transaksis as t', 't.id', '=', 'ti.transaksi_id')
+                    ->where('t.jenis_transaksi', 'pengeluaran')
+                    ->where('ti.nomor_sku', $sku)
+                    ->whereNotNull('ti.nomor_batch')
+                    ->select(
+                        'ti.nomor_batch',
+                        DB::raw('SUM(ti.qty) as qty_keluar')
+                    )
+                    ->groupBy('ti.nomor_batch')
+                    ->pluck('qty_keluar', 'nomor_batch');
+
+                $sisaDiminta = $qtyDiminta;
+
+                foreach ($batchMasuk as $batch) {
+                    $sudahKeluar = (int) ($batchKeluar[$batch->nomor_batch] ?? 0);
+                    $stokBatch = max(0, (int) $batch->qty_masuk - $sudahKeluar);
+
+                    if ($stokBatch === 0) {
+                        continue;
+                    }
+
+                    $qtyAmbil = min($sisaDiminta, $stokBatch);
+
+                    $alokasiItems[] = [
+                        'produk' => $varian->produk->nama_produk,
+                        'varian' => $varian->nama_varian,
+                        'nomor_sku' => $sku,
+                        'nomor_batch' => $batch->nomor_batch,
+                        'qty' => $qtyAmbil,
+                        'harga' => $varian->harga_varian,
+                        'sub_total' => $varian->harga_varian * $qtyAmbil,
+                    ];
+
+                    $totalHarga += $varian->harga_varian * $qtyAmbil;
+                    $sisaDiminta -= $qtyAmbil;
+
+                    if ($sisaDiminta === 0) {
+                        break;
+                    }
+                }
+
+                if ($sisaDiminta > 0) {
+                    throw ValidationException::withMessages([
+                        'items' => "Stok batch untuk SKU {$sku} tidak mencukupi. Kekurangan {$sisaDiminta} barang."
+                    ]);
+                }
+            }
+
+            // Buat transaksi setelah semua stok berhasil divalidasi.
+            $transaksi = Transaksi::create([
+                'nomor_transaksi' => $nomorTransaksi,
+                'jenis_transaksi' => $this->jenisTransaksi,
+                'jumlah_barang' => count($items),
+                'total_harga' => $totalHarga,
+                'keterangan' => $request->keterangan,
+                'petugas' => Auth::user()->name,
+                'penerima' => $request->penerima,
+                'kontak' => $request->kontak,
+            ]);
+
+            // Simpan satu detail untuk setiap batch yang digunakan.
+            foreach ($alokasiItems as $alokasi) {
+                $transaksi->items()->create($alokasi);
+            }
+
+            // Kurangi stok total dan catat kartu stok per SKU.
+            $totalKeluarPerSku = collect($alokasiItems)
+                ->groupBy('nomor_sku');
+
+            foreach ($totalKeluarPerSku as $sku => $detailItems) {
+                $qtyKeluar = $detailItems->sum('qty');
+
+                $varian = VarianProduk::where('nomor_sku', $sku)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($varian->stok_varian < $qtyKeluar) {
+                    throw ValidationException::withMessages([
+                        'items' => "Stok total SKU {$sku} tidak mencukupi."
+                    ]);
+                }
+
+                $varian->decrement('stok_varian', $qtyKeluar);
 
                 KartuStok::create([
                     'nomor_transaksi' => $nomorTransaksi,
                     'jenis_transaksi' => 'out',
-                    'nomor_sku'       => $item['nomor_sku'],
-                    'jumlah_keluar'   => $item['qty'],
-                    'stok_akhir'      => $varian->fresh()->stok_varian, // Ambil data terbaru
-                    'petugas'         => Auth::user()->name
+                    'nomor_sku' => $sku,
+                    'jumlah_keluar' => $qtyKeluar,
+                    'stok_akhir' => $varian->fresh()->stok_varian,
+                    'petugas' => Auth::user()->name,
                 ]);
-
-                $transaksi->total_harga += $varian->harga_varian * $item['qty'];
-                $transaksi->save();
             }
-        }
 
-        return response()->json([
-            'success'      => true,
-            'redirect_url' => route('transaksi-keluar.create')
-        ]);
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('transaksi-keluar.create'),
+            ]);
+        });
     }
+
 
     public function getTransaksiKeluar() {
         $search = request()->query('search');
