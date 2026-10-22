@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('transaksi_retur_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('transaksi_terur_id')->nullable('transaksi-returs')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('transaksi_retur_id')->nullable('transaksi-returs')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('produk');
             $table->string('nomor_sku');
             $table->string('nomor_batch');

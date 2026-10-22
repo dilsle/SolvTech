@@ -44,7 +44,7 @@
                     </select>
                 </div>
                 <div class="mt-2">
-                    <label for="note" class="formlabel">Note</label>
+                    <label for="note" class="form-label">Note</label>
                     <textarea class="form-control" id="note" cols="30" rows="5"></textarea>
                 </div>
                 <div class="mt-2">
@@ -202,13 +202,10 @@
                 });
                 return;
             }
-
-            // Cari barang retur berdasarkan ID detail transaksi
             let existingItem = returItems.find(
                 item => item.id === selectedItemData.id
             );
 
-            // Hitung qty yang sudah dimasukkan untuk barang ini
             let qtySebelumnya = existingItem ? existingItem.qty : 0;
 
             if (qty + qtySebelumnya > Number(selectedItemData.qty)) {
@@ -298,6 +295,45 @@
 
             returItems.splice(index, 1);
             renderTable();
+        });
+
+
+        $("#btn-submit-retur").on("click", function () {
+            let nomor_transaksi = $("#nomor_transaksi").text().trim();
+
+            if (!nomor_transaksi) {
+                swal({
+                    icon: "warning",
+                    title: "Perhatian",
+                    text: "Pilih transaksi terlebih dahulu"
+                });
+                return;
+            }
+
+            if (returItems.length === 0) {
+                swal({
+                    icon: "warning",
+                    title: "Perhatian",
+                    text: "Tidak ada data yang akan diretur"
+                });
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "{{ route('transaksi-retur.store') }}",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    nomor_transaksi: nomor_transaksi,
+                    items: returItems
+                },
+                success: function (response) {
+                    if (response.success) {
+                        window.loation.href = response.redirect_url;
+                    }
+                }
+
+            });
         });
 
 
