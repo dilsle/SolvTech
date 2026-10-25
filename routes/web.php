@@ -10,6 +10,8 @@ use App\Http\Controllers\TransaksiKeluarController;
 use App\Http\Controllers\ExportLaporanTransaksiController;
 use App\Http\Controllers\LaporanKenaikanHargaController;
 use App\Http\Controllers\TransaksiReturController;
+use App\Http\Controllers\PeriodeStokOpnameController;
+use App\Http\Controllers\InputStokOpnameController;
 use App\Models\KategoriProduk;
 use App\Models\LaporanKenaikanHarga;
 use Illuminate\Support\Facades\Auth;
@@ -48,5 +50,9 @@ Route::middleware('auth')->group(function(){
     Route::resource('transaksi-masuk', TransaksiMasukController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('transaksi-keluar', TransaksiKeluarController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('transaksi-retur', TransaksiReturController::class)->only(['index', 'create', 'store', 'show']);
-
+    Route::prefix('stok-opname')->name('stok-opname.')->group(function () {
+        Route::resource('periode', PeriodeStokOpnameController::class);
+        Route::resource('input-data', InputStokOpnameController::class);
     });
+
+ });

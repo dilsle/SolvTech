@@ -98,6 +98,24 @@ class Sidebar extends Component
                 ]
             ],
             [
+                'label' => 'Stok Opname',
+                'route' => '#',
+                'is_active' => request()->routeIs('stok-opname.*'),
+                'icon' => 'fas fa-pen',
+                'is_dropdown' => true,
+                'items' => [
+                    [
+                        'label' => 'Periode Stok Opname',
+                        'route' => 'stok-opname.periode.index',
+                    ],
+                    [
+                        'label' => 'Input Laporan',
+                        'route' => 'stok-opname.input-data.create',
+                    ]
+
+                ]
+            ],
+            [
                 'label' => 'Laporan Kenaikan Harga',
                 'route' => 'laporan-kenaikan-harga.index',
                 'is_active' => request()->routeIs('laporan-kenaikan-harga.*'),
