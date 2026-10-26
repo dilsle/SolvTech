@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('tanggal_selesai');
             $table->integer('jumlah_barang');
             $table->integer('jumlah_barang_sesuai')->nullable();
-            $table->integer('jumlah_barang_selasih')->nullable();
+            $table->integer('jumlah_barang_selisih')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->boolean('is_active')->default(false);
             $table->timestamps();

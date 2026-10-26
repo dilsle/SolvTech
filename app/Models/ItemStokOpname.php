@@ -18,4 +18,9 @@ class ItemStokOpname extends Model
         return $this->belongsTo(VarianProduk::class, 'nomor_sku', 'nomor_sku');
     }
 
+public static function jumlahDilaporkan($periode, $status) {
+
+        $jumlah = ItemStokOpname::where('periode_stok_opname_id', $periode)->where('status', $status)->count();
+        return $jumlah;
+    }
 }

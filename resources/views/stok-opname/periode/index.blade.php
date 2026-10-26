@@ -34,6 +34,9 @@
                 </td>
                 <td>
                     <div class="d-flex align-items-center gap-1">
+                        <a href="{{route('stok-opname.periode.show', $item['id'])}}" class="btn btn-info btn-icon btn-round">
+                            <i class="fas fa-book"></i>
+                        </a>
                         <x-stok-opname.form-periode-stok-opname id="{{ $item['id'] }}" />
                         <x-confirm-delete id="{{ $item['id'] }}" route="stok-opname.periode.destroy" />
                     </div>

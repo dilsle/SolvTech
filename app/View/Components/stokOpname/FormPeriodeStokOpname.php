@@ -19,8 +19,8 @@ class FormPeriodeStokOpname extends Component
         if ($id) {
             $periode = PeriodeStokOpname::findOrFail($id);
             $this->id = $periode->id;
-            $this->tangal_mulai = $periode->tanggal_mulai;
-            $this->tangal_selesai = $periode->tanggal_selesai;
+            $this->tanggal_mulai = $periode->tanggal_mulai;
+            $this->tanggal_selesai = $periode->tanggal_selesai;
             $this->is_active = $periode->is_active;
             $this->action = route('stok-opname.periode.update', $periode->id);
         } else {
