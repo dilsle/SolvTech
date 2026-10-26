@@ -8,6 +8,8 @@ use App\Models\VarianProduk;
 use App\Models\ItemStokOpname;
 use App\Http\Requests\StorePeriodeStokOpnameRequest;
 use App\Http\Requests\UpdatePeriodeStokOpnameRequest;
+use Illuminate\Types\Relations\Car;
+use Pcntl\QosClass;
 
 class PeriodeStokOpnameController extends Controller
 {
@@ -27,8 +29,8 @@ class PeriodeStokOpnameController extends Controller
                 'is_active'             => $q->is_active,
                 'is_completed'          => $q->is_completed,
                 'jumlah_barang'         => $q->jumlah_barang,
-                'jumlah_barang_sesuai'  => $q->jumlah_barang_sesuai,
-                'jumlah_barang_selisih' => $q->jumlah_barang_selisih
+                'jumlah_barang_sesuai'  => ItemStokOpname::jumlahDilaporkan($q->id, 'sesuai'),
+                'jumlah_barang_selisih' => ItemStokOpname::jumlahDilaporkan($q->id,'selisih')
             ];
         });
 
@@ -98,5 +100,22 @@ class PeriodeStokOpnameController extends Controller
         return redirect()->route('stok-opname.periode.index');
     }
 
+    public function show($periode) {
+        $pageTitle = $this->pageTitle;
+        $dataPeriode = PeriodeStokOpname::findOrFail($periode);
+        $tanggalMulai = Carbon::parse($dataPeriode->tanggal_mulai)->locale('id')->translatedFormat('d M Y');
+        $tanggalSelesai = Carbon::parse($dataPeriode->tanggal_selesai)->locale('id')->translatedFormat('d M Y');
+        $periode =  $tanggalMulai . 's/d' . $tanggalSelesai;
+        $dataPeriode['periode'] = $periode;
+
+        $dataPeriode['jumlah_barang_sesuai'] = ItemStokOpname::jumlahDilaporkan($dataPeriode->id, 'sesuai');
+        $dataPeriode['jumlah_barang_selisih'] = ItemStokOpname::jumlahDilaporkan($dataPeriode->id, 'selisih');
+        $dataPeriode['items'] = $dataPeriode->items->map(function ($q) {
+            $q->setAttribute('produk', $q->varian->produk->nama_produk . '' . $q->varian->nama_varian);
+            return $q;
+        });
+
+        return view('stok-opname.periode.show', compact('pageTitle', 'dataPeriode'));
+    }
 
 }
