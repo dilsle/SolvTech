@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function(){
 
     Route::post('export-laporan-transaksi', [ExportLaporanTransaksiController::class, 'exportLaporanTransaksi'])->name
     ('export-laporan-transaksi');
+    Route::post('export-laporan-kartu-stok', [KartuStokController::class, 'exportLaporan']);
 
     Route::resource('laporan-kenaikan-harga', LaporanKenaikanHargaController::class)->only('index', 'update');
 

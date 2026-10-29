@@ -8,8 +8,6 @@ use App\Models\VarianProduk;
 use App\Models\ItemStokOpname;
 use App\Http\Requests\StorePeriodeStokOpnameRequest;
 use App\Http\Requests\UpdatePeriodeStokOpnameRequest;
-use Illuminate\Types\Relations\Car;
-use Pcntl\QosClass;
 
 class PeriodeStokOpnameController extends Controller
 {
@@ -30,7 +28,7 @@ class PeriodeStokOpnameController extends Controller
                 'is_completed'          => $q->is_completed,
                 'jumlah_barang'         => $q->jumlah_barang,
                 'jumlah_barang_sesuai'  => ItemStokOpname::jumlahDilaporkan($q->id, 'sesuai'),
-                'jumlah_barang_selisih' => ItemStokOpname::jumlahDilaporkan($q->id,'selisih')
+                'jumlah_barang_selisih' => ItemStokOpname::jumlahDilaporkan($q->id, 'selisih')
             ];
         });
 
@@ -38,7 +36,6 @@ class PeriodeStokOpnameController extends Controller
     }
 
     public function store(StorePeriodeStokOpnameRequest $request){
-
         $isActive = $request->is_active ? true : false;
         $varian = VarianProduk::all();
         $newPeriode = PeriodeStokOpname::create([
@@ -62,8 +59,8 @@ class PeriodeStokOpnameController extends Controller
 
         toast()->success('Periode Stok Opname berhasil ditambahkan');
         return redirect()->route('stok-opname.periode.index');
-
     }
+
     public function update(UpdatePeriodeStokOpnameRequest $request, $id)
     {
         $isActive = $request->is_active ? true : false;
@@ -102,20 +99,27 @@ class PeriodeStokOpnameController extends Controller
 
     public function show($periode) {
         $pageTitle = $this->pageTitle;
-        $dataPeriode = PeriodeStokOpname::findOrFail($periode);
+
+        // Memuat relasi bertingkat secara aman menggunakan eager loading
+        $dataPeriode = PeriodeStokOpname::with('items.varian.produk')->findOrFail($periode);
+
         $tanggalMulai = Carbon::parse($dataPeriode->tanggal_mulai)->locale('id')->translatedFormat('d M Y');
         $tanggalSelesai = Carbon::parse($dataPeriode->tanggal_selesai)->locale('id')->translatedFormat('d M Y');
-        $periode =  $tanggalMulai . 's/d' . $tanggalSelesai;
-        $dataPeriode['periode'] = $periode;
+        $formattedPeriode = $tanggalMulai . ' s/d ' . $tanggalSelesai;
 
+        $dataPeriode['periode'] = $formattedPeriode;
         $dataPeriode['jumlah_barang_sesuai'] = ItemStokOpname::jumlahDilaporkan($dataPeriode->id, 'sesuai');
         $dataPeriode['jumlah_barang_selisih'] = ItemStokOpname::jumlahDilaporkan($dataPeriode->id, 'selisih');
+
+        // Menggunakan null-safe operator (?->) untuk mencegah error pada data null
         $dataPeriode['items'] = $dataPeriode->items->map(function ($q) {
-            $q->setAttribute('produk', $q->varian->produk->nama_produk . '' . $q->varian->nama_varian);
+            $namaProduk = $q->varian?->produk?->nama_produk ?? 'Produk Tidak Ditemukan';
+            $namaVarian = $q->varian?->nama_varian ?? '';
+
+            $q->setAttribute('produk', trim($namaProduk . ' ' . $namaVarian));
             return $q;
         });
 
         return view('stok-opname.periode.show', compact('pageTitle', 'dataPeriode'));
     }
-
 }
