@@ -15,6 +15,9 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
             <div class="modal-body">
+                <div>
+                    <x-form-export-laporan-kartu-stok nomorSku="{{ $nomor_sku }}" />
+                </div>
                 <table class="table" id="table-kartu-stok">
                     <thead>
                         <tr>
