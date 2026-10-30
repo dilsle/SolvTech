@@ -39,6 +39,25 @@ class TransaksiKeluarController extends Controller
         }
 
         $transaksi = $query->paginate($perPage)->appends(request()->query());
+
+        $awalGrafik = Carbon::now()->startOfMonth()->subMonths(5);
+        $dataBulanan = Transaksi::where('jenis_transaksi', $this->jenisTransaksi)
+            ->where('created_at', '>=', $awalGrafik)
+            ->selectRaw('YEAR(created_at) as tahun, MONTH(created_at) as bulan, COUNT(*) as jumlah, SUM(total_harga) as total')
+            ->groupBy('tahun', 'bulan')
+            ->get()
+            ->keyBy(fn ($item) => sprintf('%04d-%02d', $item->tahun, $item->bulan));
+
+        $grafikTransaksi = ['labels' => [], 'jumlah' => [], 'total' => []];
+        for ($tanggal = $awalGrafik->copy(); $tanggal->lte(Carbon::now()->startOfMonth()); $tanggal->addMonth()) {
+            $kunci = $tanggal->format('Y-m');
+            $data = $dataBulanan->get($kunci);
+
+            $grafikTransaksi['labels'][] = $tanggal->locale('id')->translatedFormat('M Y');
+            $grafikTransaksi['jumlah'][] = (int) ($data->jumlah ?? 0);
+            $grafikTransaksi['total'][] = (float) ($data->total ?? 0);
+        }
+
         $pageTitle = $this->pageTitle;
         return view('transaksi-keluar.index', compact('pageTitle', 'transaksi'));
     }
