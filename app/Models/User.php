@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // Sesuaikan jika ada kolom role
     ];
 
     /**
@@ -45,5 +46,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // Relasi: User memiliki satu data pegawai
+    public function pegawai()
+    {
+        return $this->hasOne(Pegawai::class, 'user_id');
+    }
+
+    // Relasi: User admin dapat memproses banyak pengajuan izin
+    public function pengajuanIzinDiproses()
+    {
+        return $this->hasMany(PengajuanIzin::class, 'disetujui_oleh');
     }
 }
