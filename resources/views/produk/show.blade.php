@@ -11,17 +11,18 @@
         <x-meta-item label="Kategori" value="{{$produk->kategori->nama_kategori}}"/>
         <x-meta-item label="Deskripsi" value="{{$produk->deskripsi_produk}}"/>
         <div class="mt-2">
-            <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-dark btn-sm btn-round" data-bs-toggle="modal" data-bs-target="#modalFormVarian"
-                    id="btnTambahVarian">
-                    Tambah Varian
-                </button>
-            </div>
+            @if (auth()->user()->role === 'admin')
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-dark btn-sm btn-round" data-bs-toggle="modal" data-bs-target="#modalFormVarian"
+                        id="btnTambahVarian">
+                        Tambah Varian
+                    </button>
+                </div>
+            @endif
 
             {{-- Bagian Row dan Kolom Varian --}}
             <div class="row mt-2">
                 @forelse ($produk->varian as $item)
-                {{-- Diubah dari col4 menjadi col-md-4 agar jadi 3 card sebaris --}}
                 <div class="col-md-4 mb-3">
                     <x-produk.card-varian :varian="$item"/>
                 </div>

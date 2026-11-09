@@ -29,7 +29,7 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table mt-3">
                         <thead>
                             <tr>
                                 <th>No</th>

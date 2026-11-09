@@ -2,7 +2,7 @@
         <div class="sidebar-logo">
           <!-- Logo Header -->
           <div class="logo-header" data-background-color="white">
-            <a href="/home" class="logo">
+            <a href="{{ auth()->user()->role === 'pegawai' ? route('pegawai.dashboard') : route('home') }}" class="logo">
               <img
                 src="{{ asset('template')}}/assets/img/kaiadmin/logo_light.svg"
                 alt="navbar brand"

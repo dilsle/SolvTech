@@ -14,7 +14,7 @@ class Sidebar extends Component
     public $links;
     public function __construct()
     {
-        $this->links = [
+        $adminLinks = [
             [
                 'label' => 'Dashboar Analitik',
                 'route' => 'home',
@@ -116,10 +116,6 @@ class Sidebar extends Component
                 'is_dropdown' => true,
                 'items' => [
                     [
-                        'label' => 'Transaksi Baru',
-                        'route' => 'transaksi-keluar.create',
-                    ],
-                    [
                         'label' => 'Data Transaksi',
                         'route' => 'transaksi-keluar.index',
                     ]
@@ -170,6 +166,70 @@ class Sidebar extends Component
                 'is_dropdown' => false
             ],
         ];
+
+        $pegawaiLinks = [
+            [
+                'label' => 'Dashboard',
+                'route' => 'pegawai.dashboard',
+                'is_active' => request()->routeIs('pegawai.dashboard'),
+                'icon' => 'fas fa-chart-line',
+                'is_dropdown' => false
+            ],
+            [
+                'label' => 'Data Produk',
+                'route' => 'master-data.produk.index',
+                'is_active' => request()->routeIs('master-data.produk.*'),
+                'icon' => 'fas fa-box-open',
+                'is_dropdown' => false
+            ],
+            [
+                'label' => 'Stok Barang',
+                'route' => 'master-data.stok-barang.index',
+                'is_active' => request()->routeIs('master-data.stok-barang.*'),
+                'icon' => 'fas fa-truck-loading',
+                'is_dropdown' => false
+            ],
+            [
+                'label' => 'Stok Opname',
+                'route' => '#',
+                'is_active' => request()->routeIs('stok-opname.*'),
+                'icon' => 'fas fa-pen',
+                'is_dropdown' => true,
+                'items' => [
+                    [
+                        'label' => 'Periode Stok Opname',
+                        'route' => 'stok-opname.periode.index',
+                    ],
+                    [
+                        'label' => 'Input Laporan',
+                        'route' => 'stok-opname.input-data.create',
+                    ]
+
+                ]
+            ],
+            [
+                'label' => 'Penjualan Barang',
+                'route' => '#',
+                'is_active' => request()->routeIs('transaksi-keluar.*'),
+                'icon' => 'fas fa-dollar-sign',
+                'is_dropdown' => true,
+                'items' => [
+                    [
+                        'label' => 'Transaksi Baru',
+                        'route' => 'transaksi-keluar.create',
+                    ],
+                    [
+                        'label' => 'Data Transaksi',
+                        'route' => 'transaksi-keluar.index',
+                    ]
+
+                ]
+            ],
+
+        ];
+        $this->links = (request()->user()->role === 'pegawai')
+            ? $pegawaiLinks
+            : $adminLinks;
     }
 
     /**

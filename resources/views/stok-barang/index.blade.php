@@ -21,7 +21,7 @@
                     <x-button-reset-filter route="master-data.stok-barang.index"/>
                 </div>
             </div>
-            <table class="table">
+            <table class="table mt-3">
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 15px">No</th>
@@ -30,7 +30,9 @@
                         <th>Kategori</th>
                         <th>Stok</th>
                         <th>Haga</th>
-                        <th>Kartu Stok</th>
+                        @if (auth()->user()->role === 'admin')
+                            <th>Kartu Stok</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -42,9 +44,11 @@
                             <td>{{ $item ['kategori']}}</td>
                             <td>{{ number_format($item ['stok'])}} pcs</td>
                             <td>Rp. {{ number_format($item ['harga']) }}</td>
-                            <td>
-                                <x-kartu-stok nomor_sku="{{ $item['nomor_sku'] }}" />
-                            </td>
+                            @if (auth()->user()->role === 'admin')
+                                <td>
+                                    <x-kartu-stok nomor_sku="{{ $item['nomor_sku'] }}" />
+                                </td>
+                            @endif
                         </tr>
                     @empty
                     <tr>

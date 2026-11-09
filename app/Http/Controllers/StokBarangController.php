@@ -18,17 +18,19 @@ class StokBarangController extends Controller
         $rKategori = request()->query('kategori');
         $query = VarianProduk::query();
         $query->with('produk', 'produk.kategori');
-        if($search) {
-            $query->where('nama_varian', 'like', '%' . $search . '%')
-            ->onWhere('nomor_sku', 'like', '%' . $search . '%')
-            ->onWhereHas('produk', function ($query) use ($search) {
-                $query->where('nama_produk', 'like', '%' . $search . '%');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_varian', 'like', '%' . $search . '%')
+                ->orWhere('nomor_sku', 'like', '%' . $search . '%')
+                ->orWhereHas('produk', function ($q2) use ($search) {
+                    $q2->where('nama_produk', 'like', '%' . $search . '%');
+                });
             });
         }
 
         if ($rKategori) {
-            $query->whereHas('produk', function ($query) use ($kategori) {
-                $query->where('kategori_produk_id', 'kategori');
+            $query->whereHas('produk', function ($q) use ($rKategori) {
+                $q->where('kategori_produk_id', $rKategori);
             });
         }
 

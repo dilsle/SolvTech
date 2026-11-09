@@ -18,7 +18,7 @@ class TransaksiKeluarController extends Controller
     public $pageTitle = 'Transaksi Keluar';
     public $jenisTransaksi = 'pengeluaran';
 
-    public function index() {
+    public function index(Request $request) {
         $penerima = request()->query('penerima');
         $tanggalAwal = request()->query('tanggal_awal');
         $tanggalAkhir = request()->query('tanggal_akhir');
@@ -27,6 +27,10 @@ class TransaksiKeluarController extends Controller
         $query = Transaksi::query();
         $query->orderBy('created_at', 'DESC');
         $query->where('jenis_transaksi', $this->jenisTransaksi);
+
+        if ($request->user()->role === 'pegawai') {
+            $query->where('petugas', $request->user()->name);
+        }
 
         if($penerima) {
             $query->where('penerima', 'like', '%'.$penerima.'%');
@@ -68,10 +72,15 @@ class TransaksiKeluarController extends Controller
         return view('transaksi-keluar.create', compact('pageTitle'));
     }
 
-    public function show($nomor_transaksi)
+    public function show( Request $request, $nomor_transaksi)
     {
         $pageTitle = "Detail " . $this->pageTitle;
         $transaksi = Transaksi::with('items')->where('nomor_transaksi', $nomor_transaksi)->firstOrFail();
+
+        if ($request->user()->role === 'pegawai' && $transaksi->petugas !== $request->user()->name) {
+            abort(403, 'Anda tidak punya akses ke halaman ini.');
+        }
+
         $transaksi->formated_date = Carbon::parse($transaksi->created_at)->locale('id')->translatedFormat('l, d F Y');
         return view('transaksi-keluar.show', compact('pageTitle', 'transaksi'));
     }

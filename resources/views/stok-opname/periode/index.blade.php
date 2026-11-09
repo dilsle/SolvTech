@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-end">
         <x-stok-opname.form-periode-stok-opname />
     </div>
-    <table class="table">
+    <table class="table mt-3">
         <thead>
             <tr>
                 <th>No</th>

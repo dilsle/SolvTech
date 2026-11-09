@@ -72,6 +72,7 @@ class PegawaiController extends Controller
                 'name' => $request->nama,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'role' => 'pegawai', // Set role sebagai pegawai
             ]);
 
             // 2. Buat data Biodata Pegawai
