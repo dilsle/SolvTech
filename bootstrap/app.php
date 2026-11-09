@@ -11,7 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
+
+        $middleware->redirectUsersTo(function () {
+            return request()->user()->role === 'pegawai'
+                ? route('pegawai.dashboard')
+                : '/home';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

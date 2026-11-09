@@ -16,10 +16,12 @@
                     </div>
                 </div>
                 <div class="col-2 d-flex justify-content-end">
-                    <x-produk.form-produk/>
+                    @if (auth()->user()->role === 'admin')
+                        <x-produk.form-produk/>
+                    @endif
                 </div>
             </div>
-            <table class="table">
+            <table class="table mt-3">
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 15px">No</th>

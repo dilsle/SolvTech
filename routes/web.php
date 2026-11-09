@@ -22,16 +22,49 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('auth.login');
-});
+})->middleware('guest');
 
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+// ==========================================
+// AREA PEGAWAI SAJA
+// ==========================================
+Route::middleware(['auth', 'role:pegawai'])->prefix('pegawai-area')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\PegawaiDashboardController::class, 'index'])->name('pegawai.dashboard');
+});
 
-Route::middleware('auth')->group(function(){
+// ==========================================
+// AREA BERSAMA (ADMIN & PEGAWAI)
+// ==========================================
+
+// Produk: admin kelola, pegawai hanya lihat
+Route::middleware(['auth', 'role:admin'])->prefix('master-data')->name('master-data.')->group(function () {
+    Route::resource('produk', ProdukController::class)->except(['index', 'show']);
+});
+
+Route::middleware(['auth', 'role:admin,pegawai'])->prefix('master-data')->name('master-data.')->group(function () {
+    Route::resource('produk', ProdukController::class)->only(['index', 'show']);
+    Route::resource('stok-barang', StokBarangController::class)->only('index');
+
+});
+
+// Transaksi keluar: admin & pegawai sama-sama bisa lihat dan tambah
+Route::middleware(['auth', 'role:admin,pegawai'])->group(function () {
+    Route::resource('transaksi-keluar', TransaksiKeluarController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get('get-data/varian-produk', [VarianProdukController::class, 'getAllVarianJson'])->name('get-data.varian-produk');
+});
+
+Route::middleware(['auth', 'role:admin,pegawai'])->group(function () {
+    Route::get('/kartu-stok/{nomor_sku}', [KartuStokController::class, 'kartuStok'])->name('kartu-stok');
+});
+// ==========================================
+// AREA ADMIN SAJA
+// ==========================================
+Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
     Route::prefix('get-data')->name('get-data.')->group(function () {
-        Route::get('/varian-produk', [VarianProdukController::class, 'getAllVarianJson'])->name('varian-produk');
         Route::get('/transaksi-keluar', [TransaksiKeluarController::class, 'getTransaksiKeluar'])->name('transaksi-keluar');
         Route::get('/transaksi-keluar/{nomor_transaksi}', [TransaksiKeluarController::class, 'getTransaksiKeluarItems'])->name('transaksi-keluar-items');
     });
@@ -41,16 +74,10 @@ Route::middleware('auth')->group(function(){
 
     Route::resource('laporan-kenaikan-harga', LaporanKenaikanHargaController::class)->only('index', 'update');
 
-    Route::prefix('master-data')->name('master-data.')->group(function() {
+    Route::prefix('master-data')->name('master-data.')->group(function () {
         Route::resource('kategori-produk', KategoriProdukController::class);
-        Route::resource('produk', ProdukController::class);
         Route::resource('varian-produk', VarianProdukController::class)->only(['store', 'update', 'destroy']);
-        Route::resource('stok-barang', StokBarangController::class)->only('index');
     });
-
-    // ==========================================
-    // MODUL PEGAWAI, ABSENSI & IZIN
-    // ==========================================
 
     // Manajemen Pegawai
     Route::resource('pegawai', PegawaiController::class);
@@ -69,13 +96,9 @@ Route::middleware('auth')->group(function(){
     Route::get('pengaturan-absensi', [PengaturanAbsensiController::class, 'index'])->name('pengaturan-absensi.index');
     Route::put('pengaturan-absensi', [PengaturanAbsensiController::class, 'update'])->name('pengaturan-absensi.update');
 
-    // ==========================================
-    // ROUTE LAMA
-    // ==========================================
-
+    // Route lama
     Route::get('/kartu-stok/{nomor_sku}', [KartuStokController::class, 'kartuStok'])->name('kartu-stok');
     Route::resource('transaksi-masuk', TransaksiMasukController::class)->only(['index', 'create', 'store', 'show']);
-    Route::resource('transaksi-keluar', TransaksiKeluarController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('transaksi-retur', TransaksiReturController::class)->only(['index', 'create', 'store', 'show']);
 
     Route::prefix('stok-opname')->name('stok-opname.')->group(function () {
@@ -83,5 +106,4 @@ Route::middleware('auth')->group(function(){
         Route::resource('input-data', InputStokOpnameController::class);
         Route::post('/update-produk', [ItemStokOpnameController::class, 'updateProduk'])->name('update-produk');
     });
-
 });
