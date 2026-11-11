@@ -1,6 +1,11 @@
 <div class="card">
     <div class="card-body">
-        <img src="{{ asset('storage/varian-produk/'. $varian->gambar_varian) }}" alt="{{ $varian->nama_varian }}" class="img-fluid rounded mb-2" style="height: 300px; width: 100%; object-fit: contain; background-color: #f8f9fa;">
+        @if ($varian->gambar_varian)
+            <img src="{{ asset('storage/varian-produk/' . $varian->gambar_varian) }}"
+                alt="{{ $varian->nama_varian }}"
+                class="img-fluid rounded mb-2"
+                style="height: 300px; width: 100%; object-fit: contain; background-color: #f8f9fa;">
+        @endif
         <h5 class="card-ttle">{{ $varian->nama_varian}}</h5>
         <x-meta-item label='Nomor SKU' value="{{ $varian->nomor_sku}}"/>
         <x-meta-item label='Harga' value=" Rp. {{ number_format($varian->harga_varian)}}"/>

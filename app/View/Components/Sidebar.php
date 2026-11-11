@@ -23,53 +23,6 @@ class Sidebar extends Component
                 'is_dropdown' => false
             ],
             [
-                'label' => 'Manajemen Pegawai',
-                'route' => '#',
-                'is_active' => request()->routeIs('pegawai.*'), // Diubah dari manajemen-pegawai.* menjadi pegawai.*
-                'icon' => 'fas fa-users',
-                'is_dropdown' => true,
-                'items' => [
-                    [
-                        'label' => 'Data Pegawai',
-                        'route' => 'pegawai.index', // Diubah dari manajemen-pegawai.index
-                    ],
-                    [
-                        'label' => 'Tambah Pegawai',
-                        'route' => 'pegawai.create', // Diubah dari manajemen-pegawai.create
-                    ]
-                ]
-            ],
-            [
-                'label' => 'Absensi',
-                'route' => '#',
-                'is_active' => request()->routeIs('absensi.*'),
-                'icon' => 'fas fa-user-clock',
-                'is_dropdown' => true,
-                'items' => [
-                    [
-                        'label' => 'Data Absensi',
-                        'route' => 'absensi.index',
-                    ],
-                    [
-                        'label' => 'Rekap Absensi',
-                        'route' => 'absensi.rekap',
-                    ]
-                ]
-            ],
-            [
-                'label' => 'Pengajuan Izin',
-                'route' => '#',
-                'is_active' => request()->routeIs('pengajuan-izin.*'),
-                'icon' => 'fas fa-envelope-open-text',
-                'is_dropdown' => true,
-                'items' => [
-                    [
-                        'label' => 'Data Pengajuan',
-                        'route' => 'pengajuan-izin.index',
-                    ]
-                ]
-            ],
-            [
                 'label' => 'Master Data',
                 'route' => '#',
                 'is_active' => request()->routeIs('master-data.*'),
@@ -165,6 +118,53 @@ class Sidebar extends Component
                 'icon' => 'fas fa-level-up-alt',
                 'is_dropdown' => false
             ],
+            [
+                'label' => 'Manajemen Pegawai',
+                'route' => '#',
+                'is_active' => request()->routeIs('pegawai.*'),
+                'icon' => 'fas fa-users',
+                'is_dropdown' => true,
+                'items' => [
+                    [
+                        'label' => 'Data Pegawai',
+                        'route' => 'pegawai.index',
+                    ],
+                    [
+                        'label' => 'Tambah Pegawai',
+                        'route' => 'pegawai.create',
+                    ]
+                ]
+            ],
+            [
+                'label' => 'Absensi',
+                'route' => '#',
+                'is_active' => request()->routeIs('absensi.*'),
+                'icon' => 'fas fa-user-clock',
+                'is_dropdown' => true,
+                'items' => [
+                    [
+                        'label' => 'Data Absensi',
+                        'route' => 'absensi.index',
+                    ],
+                    [
+                        'label' => 'Rekap Absensi',
+                        'route' => 'absensi.rekap',
+                    ]
+                ]
+            ],
+            [
+                'label' => 'Pengajuan Izin',
+                'route' => '#',
+                'is_active' => request()->routeIs('pengajuan-izin.*'),
+                'icon' => 'fas fa-clipboard-list',
+                'is_dropdown' => true,
+                'items' => [
+                    [
+                        'label' => 'Data Pengajuan',
+                        'route' => 'pengajuan-izin.index',
+                    ]
+                ]
+            ]
         ];
 
         $pegawaiLinks = [
@@ -188,24 +188,6 @@ class Sidebar extends Component
                 'is_active' => request()->routeIs('master-data.stok-barang.*'),
                 'icon' => 'fas fa-truck-loading',
                 'is_dropdown' => false
-            ],
-            [
-                'label' => 'Stok Opname',
-                'route' => '#',
-                'is_active' => request()->routeIs('stok-opname.*'),
-                'icon' => 'fas fa-pen',
-                'is_dropdown' => true,
-                'items' => [
-                    [
-                        'label' => 'Periode Stok Opname',
-                        'route' => 'stok-opname.periode.index',
-                    ],
-                    [
-                        'label' => 'Input Laporan',
-                        'route' => 'stok-opname.input-data.create',
-                    ]
-
-                ]
             ],
             [
                 'label' => 'Penjualan Barang',

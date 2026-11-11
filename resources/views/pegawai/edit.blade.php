@@ -93,7 +93,7 @@
             </div>
 
             <div class="text-end">
-                <a href="{{ route('pegawai.index') }}" class="btn btn-secondary btn-round">Batal</a>
+                <a href="{{ route('pegawai.index') }}" class="btn btn-black btn-round">Batal</a>
                 <button type="submit" class="btn btn-primary btn-round">Perbarui Data</button>
             </div>
         </form>
