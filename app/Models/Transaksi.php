@@ -25,7 +25,6 @@ class Transaksi extends Model
 
     public static function generateNomorTransaksi($jenis)
     {
-        // Perbaikan: gunakan variabel $jenis yang diterima dari parameter, bukan $jenisTransaksi
         $prefix = $jenis === 'pemasukan' ? 'PM' : 'PG';
         $date = date('Ymd');
         $lastTransaksi = self::where('nomor_transaksi', 'like', $prefix . $date . '%')

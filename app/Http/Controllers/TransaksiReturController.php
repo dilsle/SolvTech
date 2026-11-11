@@ -77,7 +77,7 @@ class TransaksiReturController extends Controller
             ]);
         }
 
-        toast()->success('Transaksi retur behrasil disimpan');
+        toast()->success('Transaksi retur berhasil disimpan');
         return response()->json([
             'success'   => true,
             'redirect_url' => route('transaksi-retur.index')

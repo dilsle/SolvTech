@@ -28,7 +28,7 @@
                         <a href="{{ route('pegawai.edit', $pegawai->id) }}" class="btn btn-primary btn-sm w-100"><i class="fa fa-edit"></i> Edit</a>
                     </div>
                     <div class="col">
-                        <a href="{{ route('pegawai.index') }}" class="btn btn-secondary btn-sm w-100"><i class="fa fa-arrow-left"></i> Kembali</a>
+                        <a href="{{ route('pegawai.index') }}" class="btn btn-black btn-sm w-100"><i class="fa fa-arrow-left"></i> Kembali</a>
                     </div>
                 </div>
             </div>

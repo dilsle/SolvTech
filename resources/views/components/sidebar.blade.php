@@ -4,10 +4,10 @@
           <div class="logo-header" data-background-color="white">
             <a href="{{ auth()->user()->role === 'pegawai' ? route('pegawai.dashboard') : route('home') }}" class="logo">
               <img
-                src="{{ asset('template')}}/assets/img/kaiadmin/logo_light.svg"
+                src="{{ asset('template')}}/assets/img/logo.svg"
                 alt="navbar brand"
                 class="navbar-brand"
-                height="20"
+                height="70"
               />
             </a>
             <div class="nav-toggle">

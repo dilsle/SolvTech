@@ -20,10 +20,9 @@
                 </div>
             @endif
 
-            {{-- Bagian Row dan Kolom Varian --}}
             <div class="row mt-2">
                 @forelse ($produk->varian as $item)
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <x-produk.card-varian :varian="$item"/>
                 </div>
                 @empty
