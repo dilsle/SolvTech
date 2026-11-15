@@ -23,7 +23,7 @@ class VarianProdukController extends Controller
             'nomor_sku' =>  VarianProduk::generateNomorSku(),
             'nama_varian' => $request->nama_varian,
             'harga_varian' => $request->harga_varian,
-            'stok_varian' => $request->stok_varian,
+            'stok_varian' => 0,
             'gambar_varian' => $fileName
         ]);
 

@@ -26,7 +26,6 @@ class storeVarianProdukRequest extends FormRequest
             'produk_id' => 'required|exists:produks,id',
             'nama_varian' => 'required',
             'harga_varian' => 'required|numeric|min:0',
-            'stok_varian' => 'required|numeric|min:0',
             'gambar_varian' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }

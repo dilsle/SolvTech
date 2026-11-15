@@ -51,6 +51,7 @@
                 $form[0].reset();
                 $form.attr('action');
                 $form.find('small.text-danger').text('');
+                $('#wrapStok').hide();
                 $('#modalFormVarian .modal-title').text('Tambah Varian Baru');
                 modal.show();
             });
@@ -69,6 +70,7 @@
                 $form.find('input[name="harga_varian"]').val(harga_varian);
                 $form.find('input[name="stok_varian"]').val(stok_varian);
                 $form.find('small.text-danger').text('');
+                $('#wrapStok').show();
                 $('#modalFormVarian .modal-title').text('Edit Varian');
 
                 modal.show();

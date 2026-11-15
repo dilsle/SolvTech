@@ -161,7 +161,7 @@
                   <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
                     <span class="badge-role">{{ Auth::user()->role }}</span>
                     <div class="avatar-sm">
-                      <img src="{{ asset('template')}}/assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle"/>
+                      <img src="{{ asset('template')}}/assets/img/profile.svg" alt="..." class="avatar-img rounded-circle"/>
                     </div>
                     <span class="profile-username">
                       <span class="op-7">Hi,</span>
@@ -174,7 +174,7 @@
                         <div class="user-box">
                           <div class="avatar-lg">
                             <img
-                              src="{{ asset('template')}}/assets/img/profile.jpg"
+                              src="{{ asset('template')}}/assets/img/profile.svg"
                               alt="image profile"
                               class="avatar-img rounded"
                             />

@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
+
+        $middleware->appendToGroup('web', \App\Http\Middleware\NoCache::class);
+
+
         $middleware->redirectUsersTo(function () {
             return request()->user()->role === 'pegawai'
                 ? route('pegawai.dashboard')

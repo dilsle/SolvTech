@@ -23,7 +23,7 @@
                             $harga_varian ?? '')}}">
                             <small class="text-danger"> </small>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="wrapStok">
                             <label for="stok_varian" class="form-label">Stok</label>
                             <input type="text" name="stok_varian" id="stok_varian" class="form-control" value="{{ old('stok_varian',
                             $stok_varian ?? '')}}">
