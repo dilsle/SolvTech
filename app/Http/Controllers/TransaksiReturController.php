@@ -10,6 +10,9 @@ use App\Models\VarianProduk;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Transaksi;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TransaksiReturController extends Controller
 {
@@ -38,51 +41,123 @@ class TransaksiReturController extends Controller
         return view('transaksi-retur.create', compact('pageTitle'));
     }
 
-    public function store( Request $request)
+    public function store(Request $request)
     {
-        $nomorTransaksi = $request->nomor_transaksi;
-        $items = $request->items;
-        $nomorRetur = TransaksiRetur::generateNomorRetur();
-
-        $transaksi = TransaksiRetur::create([
-            'nomor_retur'       => $nomorRetur,
-            'nomor_transaksi'   => $nomorTransaksi,
-            'jumlah_barang'     => count($items),
-            'jumlah_harga'       =>array_sum(array_column($items, 'subTotal')),
-            'petugas'           => Auth::user()->name
+        $request->validate([
+            'nomor_transaksi' => 'required',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|integer',
+            'items.*.qty' => 'required|integer|min:1',
+            'items.*.note' => 'nullable|string',
+        ], [
+            'nomor_transaksi.required' => 'Pilih transaksi terlebih dahulu.',
+            'items.required' => 'Tidak ada barang yang akan diretur.',
+            'items.min' => 'Tidak ada barang yang akan diretur.',
+            'items.*.qty.min' => 'Qty retur minimal 1.',
         ]);
 
-        foreach ($items as $item) {
-            $varian = VarianProduk::where('nomor_sku', $item['nomor_sku'])->first();
-            TransaksiReturItem::create([
-                'transaksi_retur_id'    => $transaksi->id,
-                'produk'                => $varian->produk->nama_produk,
-                'varian'                => $varian->nama_varian,
-                'nomor_batch'           => $item['nomor_batch'],
-                'nomor_sku'             => $item['nomor_sku'],
-                'qty'                   => $item['qty'],
-                'sub_total'              => $item['subTotal'],
-                'harga'                 => $item['harga'],
-                'note'                  => $item['note']
-            ]);
-            $varian->decrement('stok_varian', $item['qty']);
-            $varian->save();
-            KartuStok::create([
-                'nomor_transaksi'      => $nomorRetur,
-                'jenis_transaksi'       => 'retur',
-                'nomor_sku'            => $item['nomor_sku'],
-                'jumlah_keluar'        => $item['qty'],
-                'stok_akhir'           => $varian->stok_varian,
-                'petugas'              => Auth::user()->name
-            ]);
-        }
+        return DB::transaction(function () use ($request) {
+            $transaksi = Transaksi::with('items')
+                ->where('nomor_transaksi', $request->nomor_transaksi)
+                ->where('jenis_transaksi', 'pengeluaran')
+                ->lockForUpdate()
+                ->first();
 
-        toast()->success('Transaksi retur berhasil disimpan');
-        return response()->json([
-            'success'   => true,
-            'redirect_url' => route('transaksi-retur.index')
+            if (!$transaksi) {
+                throw ValidationException::withMessages(['items' => 'Transaksi tidak ditemukan.']);
+            }
 
-        ]);
+            // Aturan: satu transaksi hanya boleh diretur satu kali
+            if (TransaksiRetur::where('nomor_transaksi', $transaksi->nomor_transaksi)->exists()) {
+                throw ValidationException::withMessages([
+                    'items' => 'Transaksi ini sudah pernah diretur dan tidak bisa diretur lagi.',
+                ]);
+            }
+
+            // Gabungkan baris yang sama (jaga-jaga kalau terkirim dobel)
+            $daftar = collect($request->items)->groupBy('id')->map(function ($rows) {
+                return [
+                    'id'   => (int) $rows->first()['id'],
+                    'qty'  => (int) $rows->sum('qty'),
+                    'note' => $rows->pluck('note')->filter()->implode('; '),
+                ];
+            })->values();
+
+            $baris = [];
+            $totalQty = 0;
+            $totalHarga = 0;
+
+            foreach ($daftar as $d) {
+                $itemAsal = $transaksi->items->firstWhere('id', $d['id']);
+
+                if (!$itemAsal) {
+                    throw ValidationException::withMessages(['items' => 'Ada barang yang tidak termasuk dalam transaksi ini.']);
+                }
+
+                if ($d['qty'] > $itemAsal->qty) {
+                    throw ValidationException::withMessages([
+                        'items' => "Qty retur {$itemAsal->produk} melebihi jumlah yang dibeli ({$itemAsal->qty} pcs).",
+                    ]);
+                }
+
+                $varian = VarianProduk::where('nomor_sku', $itemAsal->nomor_sku)->lockForUpdate()->first();
+
+                if (!$varian || $varian->stok_varian < $d['qty']) {
+                    throw ValidationException::withMessages([
+                        'items' => "Stok {$itemAsal->produk} tidak cukup untuk barang pengganti.",
+                    ]);
+                }
+
+                $subTotal = $itemAsal->harga * $d['qty'];
+                $totalQty += $d['qty'];
+                $totalHarga += $subTotal;
+
+                $baris[] = compact('itemAsal', 'varian', 'subTotal') + ['qty' => $d['qty'], 'note' => $d['note']];
+            }
+
+            $nomorRetur = TransaksiRetur::generateNomorRetur();
+
+            $retur = TransaksiRetur::create([
+                'nomor_retur'     => $nomorRetur,
+                'nomor_transaksi' => $transaksi->nomor_transaksi,
+                'jumlah_barang'   => $totalQty,
+                'jumlah_harga'    => $totalHarga,
+                'petugas'         => Auth::user()->name,
+            ]);
+
+            foreach ($baris as $b) {
+                TransaksiReturItem::create([
+                    'transaksi_retur_id' => $retur->id,
+                    'produk'             => $b['itemAsal']->produk,
+                    'varian'             => $b['varian']->nama_varian,
+                    'nomor_batch'        => $b['itemAsal']->nomor_batch,
+                    'nomor_sku'          => $b['itemAsal']->nomor_sku,
+                    'qty'                => $b['qty'],
+                    'harga'              => $b['itemAsal']->harga,
+                    'sub_total'          => $b['subTotal'],
+                    'note'               => $b['note'],
+                ]);
+
+                // Barang pengganti diambil dari stok, barang cacat tidak kembali ke stok
+                $b['varian']->decrement('stok_varian', $b['qty']);
+
+                KartuStok::create([
+                    'nomor_transaksi' => $nomorRetur,
+                    'jenis_transaksi' => 'retur',
+                    'nomor_sku'       => $b['itemAsal']->nomor_sku,
+                    'jumlah_keluar'   => $b['qty'],
+                    'stok_akhir'      => $b['varian']->fresh()->stok_varian,
+                    'petugas'         => Auth::user()->name,
+                ]);
+            }
+
+            toast()->success('Transaksi retur berhasil disimpan');
+
+            return response()->json([
+                'success'      => true,
+                'redirect_url' => route('transaksi-retur.index'),
+            ]);
+        });
     }
 
     public function show($nomor_retur) {

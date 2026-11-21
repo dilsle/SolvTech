@@ -29,4 +29,13 @@ class storeVarianProdukRequest extends FormRequest
             'gambar_varian' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
+
+    public function messages():array
+    {
+        return [
+            'nama_varian.required'  => 'Nama varian harus diisi',
+            'harga_varian.required' => 'Harga varian produk harus diisi',
+            'gambar_varian.required' => 'Gambar varian produk harus diisi',
+        ];
+    }
 }

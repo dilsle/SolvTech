@@ -15,6 +15,7 @@ class KategoriProdukController extends Controller
         $pageTitle = $this->pageTitle;
         $perPage= request()->query('perPage') ?? 10;
         $search = request()->query('search');
+        $query = KategoriProduk::withCount('produks');
         $query = KategoriProduk::query();
 
         if ($search) {
@@ -44,6 +45,12 @@ class KategoriProdukController extends Controller
 
     public function destroy(KategoriProduk $kategoriProduk)
     {
+
+        $jumlahProduk = $kategoriProduk->produks()->count();
+        if ($jumlahProduk > 0) {
+            toast()->error("Kategori '{$kategoriProduk->nama_kategori}' tidak dapat dihapus karena memiliki {$jumlahProduk} produk terkait.");
+            return redirect()->route('master-data.kategori-produk.index');
+        }
         $kategoriProduk->delete();
         toast()->success('Kategori Produk berhasil dihapus');
         return redirect()->route('master-data.kategori-produk.index');

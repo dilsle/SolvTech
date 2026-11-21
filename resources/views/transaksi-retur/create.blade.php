@@ -84,260 +84,237 @@
 @push('script')
     <script>
         $(document).ready(function () {
-        let selectedItem = {}
-        let returItems = []
-        const numberFormat = new Intl.NumberFormat('id-ID')
+            let returItems = [];
+            const numberFormat = new Intl.NumberFormat('id-ID');
 
-        $('#select-transaksi').select2({
-            placeholder: 'Pilih Transaksi',
-            delay: 250,
-            allowClear: true,
-            theme: 'bootstrap-5',
-            ajax: {
-                url: "{{ route('get-data.transaksi-keluar') }}",
-                dataType: 'json',
+            $('#select-transaksi').select2({
+                placeholder: 'Pilih Transaksi',
                 delay: 250,
-                data: function(params) {
-                    let query = {
-                        search: params.term
-                    }
-                    return query
-                },
-                processResults: function(data) {
-                    return {
-                        results:data.map((item)=>{
+                allowClear: true,
+                theme: 'bootstrap-5',
+                ajax: {
+                    url: "{{ route('get-data.transaksi-keluar') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { search: params.term };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function (item) {
+                                return {
+                                    id: item.id,
+                                    text: item.text + (item.sudah_diretur ? ' (sudah diretur)' : ''),
+                                    disabled: item.sudah_diretur
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            function resetDetail() {
+                returItems = [];
+                renderTable();
+                $("#nomor_transaksi, #tanggal, #pengirim, #kontak, #jumlah_barang, #total_harga").empty();
+                $("#table-items tbody").empty();
+                $("#select-transaksi-items").empty().append('<option></option>').trigger('change');
+            }
+
+            function getItemsTransaksi(nomor_transaksi) {
+                $.ajax({
+                    type: "GET",
+                    url: `/get-data/transaksi-keluar/${nomor_transaksi}`,
+                    success: function (response) {
+                        resetDetail();
+
+                        $("#nomor_transaksi").html(response.nomor_transaksi);
+                        $("#tanggal").html(`Tanggal : ${response.tanggal}`);
+                        $("#pengirim").html(`Penerima : ${response.penerima ?? '-'}`);
+                        $("#kontak").html(`Kontak : ${response.kontak ?? '-'}`);
+                        $("#jumlah_barang").html(`Jumlah Barang : ${response.items.reduce((t, i) => t + i.qty, 0)} pcs`);
+                        $("#total_harga").html(`Total Harga : Rp. ${numberFormat.format(response.total_harga)}`);
+
+                        $("#table-items tbody").append(
+                            response.items.map(function (item, index) {
+                                return `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${item.produk} ${item.varian ? item.varian.nama_varian : ''}</td>
+                                        <td>${item.nomor_batch ?? '-'}</td>
+                                        <td>${item.qty} pcs</td>
+                                        <td> Rp. ${numberFormat.format(item.harga)}</td>
+                                        <td> Rp. ${numberFormat.format(item.sub_total)}</td>
+                                    </tr>
+                                `;
+                            })
+                        );
+
+                        const items = response.items.map(function (item) {
                             return {
                                 id: item.id,
-                                text: item.text
-                            }
-                        })
+                                text: `${item.produk} ${item.varian ? item.varian.nama_varian : ''}`,
+                                subTotal: item.harga * item.qty,
+                                qty: item.qty,
+                                harga: item.harga,
+                                nomor_batch: item.nomor_batch,
+                                nomor_sku: item.nomor_sku
+                            };
+                        });
+
+                        $("#select-transaksi-items").empty().append('<option></option>').select2({
+                            placeholder: "Pilih Produk",
+                            allowClear: true,
+                            theme: "bootstrap-5",
+                            data: items
+                        });
                     }
-                },
-                cache:true
+                });
             }
-        })
 
-        function getItemsTransaksi(nomor_transaksi) {
+            $("#select-transaksi").on("select2:select", function (e) {
+                getItemsTransaksi(e.params.data.text);
+            });
 
-            $.ajax({
-                type: "GET",
-                url: `/get-data/transaksi-keluar/${nomor_transaksi}`,
-                success: function (response) {
-                    console.log(response);
-                    $("#nomor_transaksi").html(response.nomor_transaksi);
-                    $("#tanggal").html(`Tanggal : ${response.tanggal}`);
-                    $("#pengirim").html(`Pengirim : ${response.penerima}`);
-                    $("#kontak").html(`Kontak : ${response.kontak}`);
-                    $("#jumlah_barang").html(`Jumlah Barang : ${response.jumlah_barang} pcs`);
-                    $("#total_harga").html(`Total Harga : Rp. ${numberFormat.format(response.total_harga)}`);
+            $("#select-transaksi").on("select2:clear", function () {
+                resetDetail();
+            });
 
-                    $("#table-items tbody").append(
-                        response.items.map((item, index)=>{
-                            return `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${item.produk} ${item.varian.nama_varian}</td>
-                                    <td>${item.nomor_batch}</td>
-                                    <td>${item.qty} pcs</td>
-                                    <td> Rp. ${numberFormat.format(item.harga)}</td>
-                                    <td> Rp. ${numberFormat.format(item.sub_total)}</td>
-                                </tr>
-                            `
-                        })
-                    )
+            $("#btn-add").on("click", function (e) {
+                e.preventDefault();
 
-                    let items = response.items.map((item)=>{
-                        return {
-                            id: item.id,
-                            text: `${item.produk} ${item.varian.nama_varian}`,
-                            subTotal: item.harga * item.qty,
-                            qty: item.qty,
-                            harga: item.harga,
-                            nomor_batch: item.nomor_batch,
-                            nomor_sku: item.nomor_sku
+                const selectedItemData = $("#select-transaksi-items").select2("data")[0];
+                const note = $("#note").val().trim();
+                const qty = parseInt($("#qty").val());
+
+                if (!selectedItemData || !selectedItemData.id || !note || isNaN(qty)) {
+                    swal({ icon: 'warning', title: 'Perhatian', text: 'Input belum lengkap', timer: 3000 });
+                    return;
+                }
+
+                if (qty <= 0) {
+                    swal({ icon: 'warning', title: 'Perhatian', text: 'Qty tidak boleh kurang dari 1', timer: 3000 });
+                    return;
+                }
+
+                const existingItem = returItems.find(item => item.id === selectedItemData.id);
+                const qtySebelumnya = existingItem ? existingItem.qty : 0;
+
+                if (qty + qtySebelumnya > Number(selectedItemData.qty)) {
+                    swal({ icon: 'warning', title: 'Perhatian', text: 'Qty melebihi barang yang dibeli', timer: 3000 });
+                    return;
+                }
+
+                const harga = Number(selectedItemData.harga);
+
+                if (existingItem) {
+                    existingItem.qty += qty;
+                    existingItem.subTotal += harga * qty;
+                    existingItem.note = existingItem.note + "; " + note;
+                } else {
+                    returItems.push({
+                        id: selectedItemData.id,
+                        text: selectedItemData.text,
+                        note: note,
+                        qty: qty,
+                        harga: harga,
+                        subTotal: harga * qty,
+                        nomor_batch: selectedItemData.nomor_batch,
+                        nomor_sku: selectedItemData.nomor_sku
+                    });
+                }
+
+                renderTable();
+
+                $("#select-transaksi-items").val(null).trigger("change");
+                $("#note").val("");
+                $("#qty").val("");
+            });
+
+            function renderTable() {
+                const tableBody = $("#table-retur tbody");
+                tableBody.empty();
+
+                let grandTotal = 0;
+
+                returItems.forEach(function (item, index) {
+                    grandTotal += item.subTotal;
+
+                    tableBody.append(`
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.text}</td>
+                            <td>${item.note}</td>
+                            <td>${item.qty}</td>
+                            <td>Rp. ${numberFormat.format(item.subTotal)}</td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm btn-hapus" data-index="${index}">Hapus</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                if (returItems.length < 1) {
+                    tableBody.append(`
+                        <tr>
+                            <td colspan="6" class="text-center">Tidak ada data yang akan diretur</td>
+                        </tr>
+                    `);
+                }
+
+                $("#grand-total").text("Rp. " + numberFormat.format(grandTotal));
+            }
+
+            $("#table-retur").on("click", ".btn-hapus", function () {
+                returItems.splice(Number($(this).data("index")), 1);
+                renderTable();
+            });
+
+            $("#btn-submit-retur").on("click", function () {
+                const $btn = $(this);
+                const teksAsli = $btn.text();
+                const nomor_transaksi = $("#nomor_transaksi").text().trim();
+
+                if (!nomor_transaksi) {
+                    swal({ icon: "warning", title: "Perhatian", text: "Pilih transaksi terlebih dahulu" });
+                    return;
+                }
+
+                if (returItems.length === 0) {
+                    swal({ icon: "warning", title: "Perhatian", text: "Tidak ada data yang akan diretur" });
+                    return;
+                }
+
+                $btn.prop('disabled', true).text('Menyimpan...');
+
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('transaksi-retur.store') }}",
+                    dataType: 'json',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        nomor_transaksi: nomor_transaksi,
+                        items: returItems
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            swal({ icon: 'success', title: 'Berhasil', text: 'Transaksi retur berhasil disimpan', timer: 1500, buttons: false });
+                            setTimeout(function () {
+                                window.location.href = response.redirect_url;
+                            }, 1500);
                         }
-                    })
-
-                    $("#select-transaksi-items").select2({
-                        placeholder: "Pilih Produk",
-                        allowClear: true,
-                        theme: "bootstrap-5",
-                        data:items
-                    })
-                }
-            });
-        }
-
-        $("#select-transaksi").on("select2:select", function (e) {
-            selectedItem = e.params.data;
-            getItemsTransaksi(selectedItem.text);
-        })
-        $("#select-transaksi-items").on("select2:select", function (e) {
-            selectedItem = e.params.data;
-        })
-
-        $("#btn-add").on("click", function (e) {
-            e.preventDefault();
-
-            let selectedItemData = $("#select-transaksi-items").select2("data")[0];
-            let note = $("#note").val().trim();
-            let qty = parseInt($("#qty").val());
-
-            if (!selectedItemData || !note || !$("#qty").val() || isNaN(qty)) {
-                swal({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Input belum lengkap',
-                    timer: 3000
-                });
-                return;
-            }
-
-            if (qty <= 0) {
-                swal({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Qty tidak boleh kurang dari 1',
-                    timer: 3000
-                });
-                return;
-            }
-            let existingItem = returItems.find(
-                item => item.id === selectedItemData.id
-            );
-
-            let qtySebelumnya = existingItem ? existingItem.qty : 0;
-
-            if (qty + qtySebelumnya > Number(selectedItemData.qty)) {
-                swal({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Qty melebihi barang yang dikirim',
-                    timer: 3000
-                });
-                return;
-            }
-
-            let harga = Number(selectedItemData.harga);
-
-            if (existingItem) {
-                existingItem.qty += qty;
-                existingItem.subTotal += harga * qty;
-                existingItem.note = existingItem.note + "; " + note;
-            } else {
-                returItems.push({
-                    id: selectedItemData.id,
-                    text: selectedItemData.text,
-                    note: note,
-                    qty: qty,
-                    harga: harga,
-                    subTotal: harga * qty,
-                    nomor_batch: selectedItemData.nomor_batch,
-                    nomor_sku: selectedItemData.nomor_sku
-                });
-            }
-
-            renderTable();
-
-            $("#select-transaksi-items").val(null).trigger("change");
-            $("#note").val("");
-            $("#qty").val("");
-        });
-
-
-
-        function renderTable() {
-            let tableBody = $("#table-retur tbody");
-            tableBody.empty();
-
-            let grandTotal = 0;
-
-            returItems.forEach((item, index) => {
-                grandTotal += item.subTotal;
-
-                let row = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.text}</td>
-                        <td>${item.note}</td>
-                        <td>${item.qty}</td>
-                        <td>Rp. ${numberFormat.format(item.subTotal)}</td>
-                        <td>
-                            <button type="button"
-                                class="btn btn-danger btn-sm btn-hapus"
-                                data-index="${index}">
-                                Hapus
-                            </button>
-                        </td>
-                    </tr>
-                `;
-
-                tableBody.append(row);
-            });
-
-            if (returItems.length < 1) {
-                tableBody.append(`
-                    <tr>
-                        <td colspan="6" class="text-center">
-                            Tidak ada data yang akan diretur
-                        </td>
-                    </tr>
-                `);
-            }
-
-            $("#grand-total").text(
-                "Rp. " + numberFormat.format(grandTotal)
-            );
-        }
-
-        $("#table-retur").on("click", ".btn-hapus", function () {
-            let index = Number($(this).data("index"));
-
-            returItems.splice(index, 1);
-            renderTable();
-        });
-
-
-        $("#btn-submit-retur").on("click", function () {
-            let nomor_transaksi = $("#nomor_transaksi").text().trim();
-
-            if (!nomor_transaksi) {
-                swal({
-                    icon: "warning",
-                    title: "Perhatian",
-                    text: "Pilih transaksi terlebih dahulu"
-                });
-                return;
-            }
-
-            if (returItems.length === 0) {
-                swal({
-                    icon: "warning",
-                    title: "Perhatian",
-                    text: "Tidak ada data yang akan diretur"
-                });
-                return;
-            }
-
-            $.ajax({
-                type: "POST",
-                url: "{{ route('transaksi-retur.store') }}",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    nomor_transaksi: nomor_transaksi,
-                    items: returItems
-                },
-                success: function (response) {
-                    if (response.success) {
-                        window.loation.href = response.redirect_url;
+                    },
+                    error: function (xhr) {
+                        const pesan = (xhr.responseJSON && xhr.responseJSON.message)
+                            || 'Terjadi kesalahan pada server. Coba lagi.';
+                        swal({ icon: 'error', title: 'Gagal', text: pesan });
+                        $btn.prop('disabled', false).text(teksAsli);
                     }
-                }
-
+                });
             });
+
+            renderTable();
         });
-
-
-
-    });
     </script>
 @endpush

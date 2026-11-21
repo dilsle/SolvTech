@@ -3,20 +3,19 @@
 @section('content')
     <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <h4 class="card-title">Nomor Retur : {{$transaksi->nomor_retur}} </h4>
-            <a href="{{ route('transaksi-retur.index')}}" class="text-primary">Kembali</a>
+            <h4 class="card-title">Nomor Retur : {{ $transaksi->nomor_retur }}</h4>
+            <a href="{{ route('transaksi-retur.index') }}" class="text-primary">Kembali</a>
         </div>
         <div class="card-body">
-            <x-meta-item label="Pengirim" value="{{ $transaksi->transaksi->penerima}}"/>
-            <x-meta-item label="Kontak" value="{{ $transaksi->transaksi->kontak}}"/>
-            <x-meta-item label="Nomor Transaksi" value="{{ $transaksi->transaksi->nomor_transaksi}}"/>
-            <x-meta-item label="Jumlah Harga" value=" Rp. {{number_format($transaksi->jumlah_harga)}}"/>
-            <x-meta-item label="Jumlah Barang" value="{{number_format($transaksi->jumlah_barang)}} pcs"/>
-            <x-meta-item label="Petugas" value=" {{$transaksi->petugas}}"/>
-            <x-meta-item label="Tanggal Retur" value="{{$transaksi->tanggal_retur}}"/>
+            <x-meta-item label="Pengirim" value="{{ $transaksi->transaksi->penerima }}" />
+            <x-meta-item label="Kontak" value="{{ $transaksi->transaksi->kontak }}" />
+            <x-meta-item label="Nomor Transaksi" value="{{ $transaksi->transaksi->nomor_transaksi }}" />
+            <x-meta-item label="Jumlah Harga" value="Rp. {{ number_format($transaksi->jumlah_harga) }}" />
+            <x-meta-item label="Jumlah Barang" value="{{ number_format($transaksi->jumlah_barang) }} pcs" />
+            <x-meta-item label="Petugas" value="{{ $transaksi->petugas }}" />
+            <x-meta-item label="Tanggal Retur" value="{{ $transaksi->tanggal_retur }}" />
 
-
-            <h4>Detail Barang</h4>
+            <h4 class="mt-4">Detail Barang</h4>
 
             <table class="table mt-4">
                 <thead>
@@ -56,7 +55,6 @@
                     </tr>
                 </tfoot>
             </table>
-
         </div>
     </div>
 @endsection

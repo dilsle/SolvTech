@@ -3,13 +3,13 @@
 @section('content')
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="card-title">Detail Produk {{ $produk->nama_produk}}</h4>
-        <a href="{{route('master-data.produk.index')}}" class="text-primary">Kembali</a>
+        <h4 class="card-title">Detail Produk {{ $produk->nama_produk }}</h4>
+        <a href="{{ route('master-data.produk.index') }}" class="text-primary">Kembali</a>
     </div>
     <div class="card-body">
-        <x-meta-item label="Nama Produk" value="{{$produk->nama_produk}}"/>
-        <x-meta-item label="Kategori" value="{{$produk->kategori->nama_kategori}}"/>
-        <x-meta-item label="Deskripsi" value="{{$produk->deskripsi_produk}}"/>
+        <x-meta-item label="Nama Produk" value="{{ $produk->nama_produk }}" />
+        <x-meta-item label="Kategori" value="{{ $produk->kategori->nama_kategori }}" />
+        <x-meta-item label="Deskripsi" value="{{ $produk->deskripsi_produk }}" />
         <div class="mt-2">
             @if (auth()->user()->role === 'admin')
                 <div class="d-flex justify-content-end">
@@ -22,22 +22,21 @@
 
             <div class="row mt-2">
                 @forelse ($produk->varian as $item)
-                <div class="col-md-3 mb-3">
-                    <x-produk.card-varian :varian="$item"/>
-                </div>
-                @empty
-                <div class="col-12">
-                    <div class="alert alert-info" style="box-shadow: none;">
-                        <span>Belum ada varian produk, silahkan tambahkan varian yang baru</span>
+                    <div class="col-md-3 mb-3">
+                        <x-produk.card-varian :varian="$item" />
                     </div>
-                </div>
+                @empty
+                    <div class="col-12">
+                        <div class="alert alert-info" style="box-shadow: none;">
+                            <span>Belum ada varian produk, silahkan tambahkan varian yang baru</span>
+                        </div>
+                    </div>
                 @endforelse
             </div>
-
         </div>
     </div>
 </div>
-<x-produk.form-varian/>
+<x-produk.form-varian />
 @endsection
 
 @push('script')
@@ -47,7 +46,7 @@
             let modal = new bootstrap.Modal(modalEl);
             let $form = $('#modalFormVarian form');
 
-            $("#btnTambahVarian").on('click', function(){
+            $("#btnTambahVarian").on('click', function() {
                 $form[0].reset();
                 $form.attr('action');
                 $form.find('small.text-danger').text('');
@@ -58,7 +57,7 @@
 
             $(".btnEditVarian").on('click', function() {
                 let nama_varian = $(this).data('nama-varian');
-                let harga_varian =$(this).data('harga-varian');
+                let harga_varian = $(this).data('harga-varian');
                 let stok_varian = $(this).data('stok-varian');
                 let action = $(this).data('action');
 
@@ -76,7 +75,7 @@
                 modal.show();
             });
 
-            $form.submit(function (e){
+            $form.submit(function(e) {
                 e.preventDefault();
 
                 let formData = new FormData(this);
@@ -84,9 +83,9 @@
                     type: $form.attr('method'),
                     url: $form.attr('action'),
                     data: formData,
-                    processData:false,
-                    contentType:false,
-                    success: function (response) {
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
                         swal({
                             icon: 'success',
                             title: 'Berhasil',
@@ -97,19 +96,19 @@
                             location.reload();
                         });
                     },
-                    error: function (xhr) {
+                    error: function(xhr) {
                         let errors = xhr.responseJSON.errors;
                         console.log(errors);
 
                         $form.find('small.text-danger').text('');
-                        $.each(errors, function(key, val){
+                        $.each(errors, function(key, val) {
                             $form.find('[name="' + key + '"]').next('small.text-danger').text(val[0]);
-                        })
+                        });
                     }
                 });
             });
 
-            $(".formDeleteVarian").on('click', function (e) {
+            $(".formDeleteVarian").on('click', function(e) {
                 e.preventDefault();
                 const form = this;
                 swal({
@@ -118,8 +117,8 @@
                     icon: 'warning',
                     buttons: true,
                     dangerMode: true
-                }).then((isConfirm)=>{
-                    if(isConfirm) {
+                }).then((isConfirm) => {
+                    if (isConfirm) {
                         form.submit();
                     }
                 });

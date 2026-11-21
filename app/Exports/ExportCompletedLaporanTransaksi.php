@@ -2,20 +2,21 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\GayaLaporanExcel;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\WithEvents;
-use Carbon\Carbon;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class ExportCompletedLaporanTransaksi implements FromCollection, WithHeadings, WithCustomStartCell, WithEvents
+class ExportCompletedLaporanTransaksi implements FromCollection, WithHeadings, WithCustomStartCell, WithColumnWidths, WithColumnFormatting, WithEvents
 {
-    /**
-    * @return \Illuminate\Support\Collection
-    */
+    use GayaLaporanExcel;
 
-    public $transaksi, $tanggalAwal, $tanggalAkhir, $jenisTransaksi;
+    public $transaksi, $jenisTransaksi, $tanggalAwal, $tanggalAkhir;
 
     public function __construct($transaksi, $jenisTransaksi, $tanggalAwal, $tanggalAkhir)
     {
@@ -27,41 +28,37 @@ class ExportCompletedLaporanTransaksi implements FromCollection, WithHeadings, W
 
     public function collection()
     {
-        $result = collect();
-        $data = $this->transaksi;
+        return $this->transaksi->values()->map(function ($item, $i) {
+            $induk = $item->transaksi;
 
-        foreach ($data as $index => $item) {
-            $result[] = [
-                'No'                 => $index + 1,
-                'Tanggal Transaksi'  => Carbon::parse($item->created_at)->locale('id')->translatedFormat('l, d F Y'),
-                'Nomor Transaksi'    => $item->transaksi->nomor_transaksi,
-                $this->jenisTransaksi == 'pemasukan' ? 'Pengirim' : 'Penerima' => $this->jenisTransaksi == 'pemasukan' ? $item->pengirim :
-                    $item->penerima,
-                'Kontak'             => $item->transaksi->kontak,
-                'Produk'             => $item->produk,
-                'Varian'             => $item->varian,
-                'Qty'                => $item->qty,
-                'Harga'              => number_format($item->harga),
-                'Sub Total'          => number_format($item->sub_total),
+            return [
+                $i + 1,
+                Carbon::parse($induk->created_at)->format('d-m-Y H:i'),
+                $induk->nomor_transaksi,
+                $this->jenisTransaksi == 'pemasukan' ? $induk->pengirim : $induk->penerima,
+                $induk->kontak,
+                $item->produk,
+                $item->getAttribute('varian'),
+                (int) $item->qty,
+                (float) $item->harga,
+                (float) $item->sub_total,
             ];
-        }
-
-        return $result;
+        });
     }
 
     public function headings(): array
     {
         return [
             'No',
-            'Tanggal Transaksi',
+            'Tanggal',
             'Nomor Transaksi',
             $this->jenisTransaksi == 'pemasukan' ? 'Pengirim' : 'Penerima',
             'Kontak',
             'Produk',
             'Varian',
             'Qty',
-            'Harga',
-            'Sub Total'
+            'Harga (Rp)',
+            'Sub Total (Rp)',
         ];
     }
 
@@ -70,38 +67,29 @@ class ExportCompletedLaporanTransaksi implements FromCollection, WithHeadings, W
         return 'A4';
     }
 
+    public function columnWidths(): array
+    {
+        return ['A' => 6, 'B' => 18, 'C' => 22, 'D' => 24, 'E' => 16, 'F' => 26, 'G' => 22, 'H' => 8, 'I' => 16, 'J' => 18];
+    }
+
+    public function columnFormats(): array
+    {
+        return ['H' => '#,##0', 'I' => '#,##0', 'J' => '#,##0'];
+    }
+
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->mergeCells('A1:J1');
-                $event->sheet->setCellValue('A1', 'LAPORAN TRANSAKSI ' . strtoupper($this->jenisTransaksi));
-                $event->sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-                $event->sheet->getStyle('A1')->getAlignment()->setHorizontal('center');
-
-                $periode = '-';
-                if ($this->tanggalAwal && $this->tanggalAkhir) {
-                    $periode = date('d M Y', strtotime($this->tanggalAwal)) . ' s/d ' . date('d M Y', strtotime
-                    ($this->tanggalAkhir));
-                }
-
-                $event->sheet->mergeCells('A2:J2');
-                $event->sheet->setCellValue('A2', 'Periode ' . $periode);
-                $event->sheet->getStyle('A2')->getFont()->setSize(12);
-                $event->sheet->getStyle('A2')->getAlignment()->setHorizontal('center');
-
-                $lastRow = $event->sheet->getDelegate()->getHighestRow();
-                $event->sheet->getStyle('A4:J' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle
-                    (\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-
-                // font size untuk setiap data yang di looping
-                $event->sheet->getStyle('A4:J' . $lastRow)->getFont()->setSize(12);
-
-                // font heading
-                $event->sheet->getStyle('A4:J4')->getFont()->setBold(true);
-                $event->sheet->getStyle('A4:J4')->getAlignment()->setHorizontal('center');
-
-            }
+                $this->terapkanGaya(
+                    $event,
+                    'J',
+                    'LAPORAN DETAIL TRANSAKSI ' . ($this->jenisTransaksi == 'pemasukan' ? 'MASUK' : 'KELUAR'),
+                    $this->teksPeriode($this->tanggalAwal, $this->tanggalAkhir),
+                    $this->transaksi->count(),
+                    ['H', 'J']
+                );
+            },
         ];
     }
 }

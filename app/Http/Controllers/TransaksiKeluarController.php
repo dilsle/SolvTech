@@ -6,6 +6,7 @@ use App\Models\Transaksi;
 use App\Models\VarianProduk;
 use App\Models\KartuStok;
 use App\Models\TransaksiItems;
+use App\Models\TransaksiRetur;
 use App\Http\Requests\storeTransaksiKeluarRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -198,7 +199,7 @@ class TransaksiKeluarController extends Controller
             $transaksi = Transaksi::create([
                 'nomor_transaksi' => $nomorTransaksi,
                 'jenis_transaksi' => $this->jenisTransaksi,
-                'jumlah_barang' => count($items),
+                'jumlah_barang' => array_sum(array_column($alokasiItems, 'qty')),
                 'total_harga' => $totalHarga,
                 'keterangan' => $request->keterangan,
                 'petugas' => Auth::user()->name,
@@ -242,9 +243,24 @@ class TransaksiKeluarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'redirect_url' => route('transaksi-keluar.create'),
+                'redirect_url' => route('transaksi-keluar.struk', $nomorTransaksi),
             ]);
         });
+    }
+
+    public function struk(Request $request, $nomor_transaksi)
+    {
+        $transaksi = Transaksi::with('items')
+            ->where('nomor_transaksi', $nomor_transaksi)
+            ->where('jenis_transaksi', $this->jenisTransaksi)
+            ->firstOrFail();
+
+        // Pegawai hanya boleh mencetak struk miliknya sendiri
+        if ($request->user()->role === 'pegawai' && $transaksi->petugas !== $request->user()->name) {
+            abort(403);
+        }
+
+        return view('transaksi-keluar.struk', compact('transaksi'));
     }
 
 
@@ -252,14 +268,21 @@ class TransaksiKeluarController extends Controller
         $search = request()->query('search');
         $transaksi = Transaksi::where('jenis_transaksi', 'pengeluaran')
             ->where('nomor_transaksi', 'like', '%' . $search . '%')
-            ->get()->map(function ($q){
-                return [
-                    'id'   => $q->id,
-                    'text' => $q->nomor_transaksi
-                ];
-            });
+            ->latest()
+            ->limit(30)
+            ->get();
 
-        return response()->json($transaksi);
+        $sudahDiretur = TransaksiRetur::whereIn('nomor_transaksi', $transaksi->pluck('nomor_transaksi'))
+            ->pluck('nomor_transaksi')
+            ->flip();
+
+        return response()->json($transaksi->map(function ($q) use ($sudahDiretur) {
+            return [
+                'id'            => $q->id,
+                'text'          => $q->nomor_transaksi,
+                'sudah_diretur' => $sudahDiretur->has($q->nomor_transaksi),
+            ];
+        }));
     }
 
     public function getTransaksiKeluarItems($nomor_transaksi) {

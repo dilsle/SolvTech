@@ -6,25 +6,28 @@
                 class="img-fluid rounded mb-2"
                 style="height: 300px; width: 100%; object-fit: contain; background-color: #f8f9fa;">
         @endif
-        <h5 class="card-ttle">{{ $varian->nama_varian}}</h5>
-        <x-meta-item label='Nomor SKU' value="{{ $varian->nomor_sku}}"/>
-        <x-meta-item label='Harga' value=" Rp. {{ number_format($varian->harga_varian)}}"/>
-        <x-meta-item label='Stok' value="{{ number_format($varian->stok_varian)}} pcs"/>
+        <h5 class="card-title">{{ $varian->nama_varian }}</h5>
+        <x-meta-item label="Nomor SKU" value="{{ $varian->nomor_sku }}" />
+        <x-meta-item label="Harga" value="Rp. {{ number_format($varian->harga_varian) }}" />
+        <x-meta-item label="Stok" value="{{ number_format($varian->stok_varian) }} pcs" />
     </div>
-    <div class="card-footer d-flex justify-content-between align-itemss-center gap-1">
-        <div class="w-100">
-            <button type="button" class="btn btn-outline-primary btn-sm btnEditVarian" data-id="{{ $varian->id }}"
-                data-nama-varian="{{ $varian->nama_varian}}" data-harga-varian="{{ $varian->harga_varian}}" data-stok-varian="{{
-                $varian->stok_varian}}" data-action="{{route('master-data.varian-produk.update', $varian->id)}}">
+    @if (auth()->user()->role === 'admin')
+        <div class="card-footer d-flex justify-content-between align-items-center gap-1">
+            <button type="button" class="btn btn-outline-primary btn-sm btnEditVarian"
+                data-id="{{ $varian->id }}"
+                data-nama-varian="{{ $varian->nama_varian }}"
+                data-harga-varian="{{ $varian->harga_varian }}"
+                data-stok-varian="{{ $varian->stok_varian }}"
+                data-action="{{ route('master-data.varian-produk.update', $varian->id) }}">
                 Edit
             </button>
-        </div>
-        <form action="{{ route('master-data.varian-produk.destroy', $varian->id )}}" method="POST" class="formDeleteVarian">
-            @csrf
-            @method('DELETE')
+            <form action="{{ route('master-data.varian-produk.destroy', $varian->id) }}" method="POST" class="formDeleteVarian">
+                @csrf
+                @method('DELETE')
                 <button type="submit" class="btn btn-danger btn-sm">
                     Hapus
                 </button>
-        </form>
-    </div>
+            </form>
+        </div>
+    @endif
 </div>

@@ -25,7 +25,7 @@ class StorePeriodeStokOpnameRequest extends FormRequest
         return [
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'is_active' => 'required|boolean',
+            'is_active' => 'nullable|boolean',
         ];
     }
 
@@ -33,9 +33,10 @@ class StorePeriodeStokOpnameRequest extends FormRequest
     {
         return [
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi',
+            'tanggal_mulai.date' => 'Tanggal mulai tidak valid',
             'tanggal_selesai.required' => 'Tanggal selesai wajib diisi',
-            'tanggal_selesai.after_or_equal' => 'Tanggal selesai harus setelah tanggal mulai',
-            'is_active.required' => 'Status wajib diisi',
+            'tanggal_selesai.date' => 'Tanggal selesai tidak valid',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai harus sama dengan atau setelah tanggal mulai',
         ];
     }
 

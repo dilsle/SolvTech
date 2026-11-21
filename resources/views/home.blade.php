@@ -51,15 +51,6 @@
     .sb-periode input:focus { outline: 0; }
     .sb-periode button { border: 0; background: var(--ungu); color: #fff; border-radius: 6px; padding: 4px 10px; font: inherit; font-weight: 600; }
 
-    /* banner */
-    .sb-banner { position: relative; overflow: hidden; border-radius: 16px; padding: 28px 22px; margin-bottom: 20px; color: #fff;
-                 background: linear-gradient(100deg, #6c5ce7 0%, #8479f2 100%); }
-    .sb-banner::before, .sb-banner::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.1); }
-    .sb-banner::before { width: 260px; height: 260px; right: -40px; top: -90px; }
-    .sb-banner::after  { width: 170px; height: 170px; right: 150px; top: 40px; background: rgba(255,255,255,.06); }
-    .sb-banner h2 { font-size: 1.05rem; font-weight: 700; position: relative; }
-    .sb-banner p  { margin-top: 10px; font-size: .78rem; opacity: .92; position: relative; }
-
     /* cards */
     .sb-card { background: #fff; border-radius: 16px; box-shadow: 0 1px 2px rgba(30,34,51,.04), 0 6px 20px rgba(30,34,51,.04); }
 
@@ -136,11 +127,6 @@
             <input type="date" name="end" value="{{ $end }}" aria-label="Tanggal akhir">
             <button type="submit">Terapkan</button>
         </form>
-    </div>
-
-    <div class="sb-banner">
-        <h2>Selamat datang kembali! 👋</h2>
-        <p>Pantau performa usaha dan persediaan produk Anda dalam satu tempat.</p>
     </div>
 
     {{-- 4 kartu ringkasan --}}

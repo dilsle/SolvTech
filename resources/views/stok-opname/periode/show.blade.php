@@ -12,10 +12,7 @@
                 <x-meta-item label="Jumlah Barang Sesuai" value="{{ $dataPeriode->jumlah_barang_sesuai }}" />
                 <x-meta-item label="Jumlah Barang Selisih" value="{{ $dataPeriode->jumlah_barang_selisih }}" />
                 <x-meta-item label="Status Kerja" value="{{ $dataPeriode->is_active ? 'Aktif' : 'Tidak Aktif' }}" />
-                <x-meta-item
-                    label="Pelaporan Stok Opname"
-                    value="{{ $dataPeriode->is_completed ? 'Lengkap' : 'Belum Lengkap' }}"
-                />
+                <x-meta-item label="Pelaporan Stok Opname" value="{{ $dataPeriode->is_completed ? 'Lengkap' : 'Belum Lengkap' }}"/>
             </div>
 
             <div class="mt-5">
