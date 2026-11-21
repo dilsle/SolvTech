@@ -16,7 +16,7 @@
                     <input type="text" name="kontak" id="kontak" class="form-control">
                 </div>
                 <div class="form-group mt-1">
-                    <label for="keterangan" class="form-label">keterangan</label>
+                    <label for="keterangan" class="form-label">Keterangan</label>
                     <textarea name="keterangan" id="keterangan" cols="30" rows="2" class="form-control"></textarea>
                 </div>
             </div>

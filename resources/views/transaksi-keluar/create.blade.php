@@ -16,7 +16,7 @@
                     <input type="text" name="kontak" id="kontak" class="form-control">
                 </div>
                 <div class="form-group mt-1">
-                    <label for="keterangan" class="form-label">keterangan</label>
+                    <label for="keterangan" class="form-label">Keterangan</label>
                     <textarea name="keterangan" id="keterangan" cols="30" rows="2" class="form-control"></textarea>
                 </div>
             </div>
@@ -230,18 +230,17 @@
                     keterangan: $("#keterangan").val(),
                 },
                 success: function (response) {
-                    if(response.success){
-                        // Jika menggunakan library toast/sweetalert di client, bisa dipicu di sini
+                    if (response.success) {
                         swal({
                             icon: 'success',
                             title: 'Berhasil',
-                            text: 'Transaksi Masuk berhasil ditambahkan',
-                            timer: 2000,
+                            text: 'Transaksi Keluar berhasil ditambahkan',
+                            timer: 1500,
                             showConfirmButton: false
                         });
-                        setTimeout(function(){
-                            window.location.href = response.redirect_url;
-                        }, 2000);
+                        setTimeout(function () {
+                            window.location.href = response.redirect_url + '?cetak=1';
+                        }, 1500);
                     }
                 },
                 error: function (xhr) {

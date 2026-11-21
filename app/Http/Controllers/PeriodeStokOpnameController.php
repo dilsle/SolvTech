@@ -8,6 +8,7 @@ use App\Models\VarianProduk;
 use App\Models\ItemStokOpname;
 use App\Http\Requests\StorePeriodeStokOpnameRequest;
 use App\Http\Requests\UpdatePeriodeStokOpnameRequest;
+use Illuminate\Support\Facades\DB;
 
 class PeriodeStokOpnameController extends Controller
 {
@@ -35,53 +36,56 @@ class PeriodeStokOpnameController extends Controller
         return view('stok-opname.periode.index', compact('pageTitle', 'dataPeriode'));
     }
 
-    public function store(StorePeriodeStokOpnameRequest $request){
-        $isActive = $request->is_active ? true : false;
+   public function store(StorePeriodeStokOpnameRequest $request)
+    {
+        $isActive = $request->boolean('is_active');
         $varian = VarianProduk::all();
-        $newPeriode = PeriodeStokOpname::create([
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-            'is_active' => $isActive,
-            'jumlah_barang' => count($varian)
-        ]);
 
-        foreach ($varian as $item) {
-            ItemStokOpname::create([
-                'periode_stok_opname_id' => $newPeriode->id,
-                'nomor_sku' => $item->nomor_sku,
-                'jumlah_stok' => $item->stok_varian
+        DB::transaction(function () use ($request, $isActive, $varian) {
+            $newPeriode = PeriodeStokOpname::create([
+                'tanggal_mulai' => $request->tanggal_mulai,
+                'tanggal_selesai' => $request->tanggal_selesai,
+                'is_active' => $isActive,
+                'jumlah_barang' => count($varian),
             ]);
-        }
 
-        PeriodeStokOpname::where('is_active', true)
-            ->where('id', '!=', $newPeriode->id)
-            ->update(['is_active' => false]);
+            foreach ($varian as $item) {
+                ItemStokOpname::create([
+                    'periode_stok_opname_id' => $newPeriode->id,
+                    'nomor_sku' => $item->nomor_sku,
+                    'jumlah_stok' => $item->stok_varian,
+                ]);
+            }
 
-        toast()->success('Periode Stok Opname berhasil ditambahkan');
-        return redirect()->route('stok-opname.periode.index');
+            if ($isActive) {
+                PeriodeStokOpname::where('is_active', true)
+                    ->where('id', '!=', $newPeriode->id)
+                    ->update(['is_active' => false]);
+            }
+        });
+
+        return response()->json(['message' => 'Periode Stok Opname berhasil ditambahkan']);
     }
 
     public function update(UpdatePeriodeStokOpnameRequest $request, $id)
     {
-        $isActive = $request->is_active ? true : false;
+        $isActive = $request->boolean('is_active');
 
         $periode = PeriodeStokOpname::findOrFail($id);
         $periode->update([
             'tanggal_mulai' => $request->tanggal_mulai,
             'tanggal_selesai' => $request->tanggal_selesai,
-            'is_active' => $isActive
+            'is_active' => $isActive,
         ]);
 
-        if ($request->is_active) {
+        if ($isActive) {
             PeriodeStokOpname::where('is_active', true)
                 ->where('id', '!=', $id)
                 ->update(['is_active' => false]);
         }
 
-        toast()->success('Periode Stok Opname berhasil diubah');
-        return redirect()->route('stok-opname.periode.index');
+        return response()->json(['message' => 'Periode Stok Opname berhasil diubah']);
     }
-
     public function destroy($id)
     {
         $periode = PeriodeStokOpname::findOrFail($id);

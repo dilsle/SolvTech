@@ -2,65 +2,62 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\GayaLaporanExcel;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class ExportLaporanKartuStok implements FromCollection, WithHeadings, WithCustomStartCell, WithEvents
+class ExportLaporanKartuStok implements FromCollection, WithHeadings, WithCustomStartCell, WithColumnWidths, WithColumnFormatting, WithEvents
 {
+    use GayaLaporanExcel;
+
     public $query, $varian, $tanggalAwal, $tanggalAkhir;
 
     public function __construct($query, $varian, $tanggalAwal, $tanggalAkhir)
     {
         $this->query = $query;
         $this->varian = $varian;
-
-        $formattedTanggalAwal = Carbon::parse($tanggalAwal)->locale('id')->format('d F Y');
-        $this->tanggalAwal = $formattedTanggalAwal;
-
-        $formattedTanggalAkhir = Carbon::parse($tanggalAkhir)->locale('id')->format('d F Y');
-        $this->tanggalAkhir = $formattedTanggalAkhir;
+        $this->tanggalAwal = $tanggalAwal;
+        $this->tanggalAkhir = $tanggalAkhir;
     }
 
-    /**
-    * @return \Illuminate\Support\Collection
-    */
+    private function labelJenis($jenis): string
+    {
+        return [
+            'in'         => 'Masuk',
+            'out'        => 'Keluar',
+            'retur'      => 'Retur',
+            'adjustment' => 'Penyesuaian',
+        ][$jenis] ?? ucfirst((string) $jenis);
+    }
+
     public function collection()
     {
-        $data = [];
-        foreach ($this->query as $index => $item) {
-            $data[] = [
-                'no' => $index + 1,
-                'produk' => $this->varian->produk->nama_produk . ' ' . $this->varian->nama_varian,
-                'nomor_sku' => $this->varian->nomor_sku,
-                'tanggal_transaksi' => Carbon::parse($item->created_at)->locale('id')->format('d-m-Y'),
-                'jenis_transaksi' => $item->jenis_transaksi,
-                'jumlah_masuk' => $item->jumlah_masuk,
-                'jumlah_keluar' => $item->jumlah_keluar,
-                'stok_akhir' => $item->stok_akhir,
-                'petugas' => $item->petugas
-            ];
-        }
+        $namaProduk = $this->varian->produk->nama_produk . ' ' . $this->varian->nama_varian;
 
-        return collect($data);
+        return $this->query->values()->map(function ($item, $i) use ($namaProduk) {
+            return [
+                $i + 1,
+                $namaProduk,
+                $this->varian->nomor_sku,
+                Carbon::parse($item->created_at)->format('d-m-Y H:i'),
+                $this->labelJenis($item->jenis_transaksi),
+                (int) ($item->jumlah_masuk ?? 0),
+                (int) ($item->jumlah_keluar ?? 0),
+                (int) $item->stok_akhir,
+                $item->petugas,
+            ];
+        });
     }
 
     public function headings(): array
     {
-        return [
-            'No',
-            'Produk',
-            'Nomor Sku',
-            'Tanggal Transaksi',
-            'Jenis Transaksi',
-            'Jumlah Masuk',
-            'Jumlah Keluar',
-            'Stok Akhir',
-            'Petugas'
-        ];
+        return ['No', 'Produk', 'Nomor SKU', 'Tanggal', 'Jenis', 'Jumlah Masuk', 'Jumlah Keluar', 'Stok Akhir', 'Petugas'];
     }
 
     public function startCell(): string
@@ -68,21 +65,30 @@ class ExportLaporanKartuStok implements FromCollection, WithHeadings, WithCustom
         return 'A4';
     }
 
+    public function columnWidths(): array
+    {
+        return ['A' => 6, 'B' => 34, 'C' => 16, 'D' => 18, 'E' => 16, 'F' => 14, 'G' => 14, 'H' => 12, 'I' => 20];
+    }
+
+    public function columnFormats(): array
+    {
+        $format = '#,##0;-#,##0;"-"';
+
+        return ['F' => $format, 'G' => $format, 'H' => '#,##0'];
+    }
+
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
-                // Merge kolom A1 sampai I1 untuk Judul Laporan
-                $event->sheet->mergeCells('A1:I1');
-                $event->sheet->setCellValue('A1', 'LAPORAN KARTU STOK ' . $this->varian->produk->nama_produk . ' ' . $this->varian->nama_varian);
-                $event->sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-                $event->sheet->getStyle('A1')->getAlignment()->setHorizontal('center');
-
-                // Merge kolom A2 sampai I2 untuk Periode
-                $event->sheet->mergeCells('A2:I2');
-                $event->sheet->setCellValue('A2', 'Periode ' . $this->tanggalAwal . ' s/d ' . $this->tanggalAkhir);
-                $event->sheet->getStyle('A2')->getFont()->setSize(12);
-                $event->sheet->getStyle('A2')->getAlignment()->setHorizontal('center');
+            AfterSheet::class => function (AfterSheet $event) {
+                $this->terapkanGaya(
+                    $event,
+                    'I',
+                    'KARTU STOK ' . strtoupper($this->varian->produk->nama_produk . ' ' . $this->varian->nama_varian),
+                    $this->teksPeriode($this->tanggalAwal, $this->tanggalAkhir),
+                    $this->query->count(),
+                    ['F', 'G']
+                );
             },
         ];
     }

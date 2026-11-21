@@ -17,28 +17,29 @@
                         <th>Konfirmasi</th>
                     </tr>
                 </thead>
-                @forelse ($laporan as $index => $item)
-                    <tr>
-                        <td>{{ $index +1}}</td>
-                        <td>{{$item->nomor_transaksi}}</td>
-                        <td>{{$item->varian->nama_produk}} {{$item->varian->nama_varian}}</td>
-                        <td>{{$item->nomor_batch}}</td>
-                        <td>Rp. {{number_format($item->harga_lama)}}</td>
-                        <td>Rp.{{number_format($item->harga_beli)}}</td>
-                        <td>Rp.{{number_format($item->kenaikan_harga)}}</td>
-                        <td>{{number_format($item->jumlah_barang)}} pcs</td>
-                        <td>
-                            <a href="{{route('master-data.produk.show', $item->varian->produk->id) }}" class="btn btn-sm btn-dark">
-                                Konfirmasi
-                            </a>
-
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="text-center">Tidak ada data kenaikan harga</td>
-                    </tr>
-                @endforelse
+                <tbody>
+                    @forelse ($laporan as $index => $item)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $item->nomor_transaksi }}</td>
+                            <td>{{ $item->varian->nama_produk }} {{ $item->varian->nama_varian }}</td>
+                            <td>{{ $item->nomor_batch }}</td>
+                            <td>Rp. {{ number_format($item->harga_lama) }}</td>
+                            <td>Rp. {{ number_format($item->harga_beli) }}</td>
+                            <td>Rp. {{ number_format($item->kenaikan_harga) }}</td>
+                            <td>{{ number_format($item->jumlah_barang) }} pcs</td>
+                            <td>
+                                <a href="{{ route('master-data.produk.show', $item->varian->produk->id) }}" class="btn btn-sm btn-dark">
+                                    Konfirmasi
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center">Tidak ada data kenaikan harga</td>
+                        </tr>
+                    @endforelse
+                </tbody>
             </table>
         </div>
     </div>

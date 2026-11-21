@@ -13,9 +13,22 @@ class InputStokOpnameController extends Controller
 {
     public $pageTitle = "Input Laporan Stok Opname";
 
+    public $activePeriode;
+    public $items;
     public function __construct()
     {
-        // Kosongkan constructor agar aman saat perintah Artisan (seperti route:list) dijalankan
+        $periode = PeriodeStokOpname::where('is_active', true)->first();
+        $this->activePeriode = $periode?->id;
+
+        $this->items = $periode
+            ? ItemStokOpname::with('varian.produk')
+                ->where('periode_stok_opname_id', $periode->id)
+                ->get()
+                ->map(function ($q) {
+                    $q->setAttribute('produk', $q->varian->produk->nama_produk . ' ' . $q->varian->nama_varian);
+                    return $q;
+                })
+            : collect();
     }
 
     public function create()
@@ -47,44 +60,35 @@ class InputStokOpnameController extends Controller
 
     public function update(UpdateInputStokOpnameRequest $request, $id)
     {
-        $activePeriodeRecord = PeriodeStokOpname::where('is_active', true)->first();
-        $activePeriode = $activePeriodeRecord ? $activePeriodeRecord->id : null;
-
-        if (!$activePeriode) {
-            return redirect()->back()->withErrors(['error' => 'Tidak ada periode stok opname yang aktif.']);
+        if (!$this->activePeriode) {
+            return response()->json(['message' => 'Tidak ada periode stok opname yang aktif.'], 422);
         }
 
-        $item = ItemStokOpname::find($id);
+        $item = ItemStokOpname::where('periode_stok_opname_id', $this->activePeriode)->findOrFail($id);
 
-        if (!$item) {
-            return redirect()->back()->withErrors(['error' => 'Item stok opname tidak ditemukan.']);
+        // Barang yang sudah dilaporkan dikunci untuk pegawai. Hanya admin yang boleh mengubahnya.
+        if ($item->status !== 'belum dilaporkan' && $request->user()->role !== 'admin') {
+            return response()->json([
+                'message' => "Barang ini sudah dilaporkan oleh {$item->petugas}. Hubungi admin jika perlu diubah.",
+            ], 422);
         }
 
-        $isSelisih = (int) $request->jumlah_dilaporkan != (int) $item->jumlah_stok;
+        $isSelisih = (int) $request->jumlah_dilaporkan !== (int) $item->jumlah_stok;
 
         $item->update([
             'jumlah_dilaporkan' => $request->jumlah_dilaporkan,
             'status' => $isSelisih ? 'selisih' : 'sesuai',
             'keterangan' => $request->keterangan,
-            'petugas' => Auth::user()->name
+            'petugas' => Auth::user()->name,
         ]);
 
-        $itemStokOpname = ItemStokOpname::where(
-            'periode_stok_opname_id',
-            $activePeriode
-        )
+        $belumDilaporkan = ItemStokOpname::where('periode_stok_opname_id', $this->activePeriode)
             ->where('status', 'belum dilaporkan')
             ->count();
 
-        if ($itemStokOpname == 0) {
-            PeriodeStokOpname::where('id', $activePeriode)
-                ->update(['is_completed' => true]);
-        } else {
-            PeriodeStokOpname::where('id', $activePeriode)
-                ->update(['is_completed' => false]);
-        }
+        PeriodeStokOpname::where('id', $this->activePeriode)
+            ->update(['is_completed' => $belumDilaporkan === 0]);
 
-        toast()->success('Item Stok Opname berhasil dilaporkan');
-        return redirect()->route('stok-opname.input-data.create');
+        return response()->json(['message' => 'Item stok opname berhasil dilaporkan.']);
     }
 }

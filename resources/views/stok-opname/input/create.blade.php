@@ -9,41 +9,59 @@
                         <th>No</th>
                         <th>Nomor SKU</th>
                         <th>Produk</th>
-                        <th>Stok</th>
+                        @if (auth()->user()->role === 'admin')
+                            <th>Stok</th>
+                        @endif
                         <th>Jumlah Terlapor</th>
                         <th>Status</th>
                         <th>Keterangan</th>
-                        <th>Petugs</th>
+                        <th>Petugas</th>
                         <th>Opsi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($items as $index => $item)
+                    @forelse ($items as $index => $item)
                     <tr>
                         <td>{{ $index + 1}}</td>
                         <td>{{ $item->varian->nomor_sku}}</td>
                         <td>{{ $item->produk}}</td>
-                        <td>{{ $item->varian->stok_varian}}</td>
+                        @if (auth()->user()->role === 'admin')
+                            <td>{{ $item->varian->stok_varian }}</td>
+                        @endif
                         <td>{{ $item->jumlah_dilaporkan}}</td>
                         <td>
-                            <span class="badge
-                                {{
-                                    $item->status == 'selisih' ? 'bg-danger' :
-                                    ($item->status == 'sesuai' ? 'bg-success' : 'bg-secondary')
-                                }}
-                            text-capitalize">
-                                {{ $item->status}}
-                            </span>
+                            @if (auth()->user()->role === 'admin')
+                                <span class="badge
+                                    {{
+                                        $item->status == 'selisih' ? 'bg-danger' :
+                                        ($item->status == 'sesuai' ? 'bg-success' : 'bg-secondary')
+                                    }}
+                                text-capitalize">
+                                    {{ $item->status }}
+                                </span>
+                            @else
+                                <span class="badge {{ $item->status == 'belum dilaporkan' ? 'bg-secondary' : 'bg-primary' }}">
+                                    {{ $item->status == 'belum dilaporkan' ? 'Belum dilaporkan' : 'Sudah dilaporkan' }}
+                                </span>
+                            @endif
                         </td>
                         <td>{{ $item->keterangan}}</td>
                         <td>{{ $item->petugas}}</td>
                         <td>
-                            <div>
+                            @if ($item->status === 'belum dilaporkan' || auth()->user()->role === 'admin')
                                 <x-stok-opname.form-input-item :item="$item"/>
-                            </div>
+                            @else
+                                <span class="text-success small">
+                                    <i class="fas fa-check-circle me-1"></i> Sudah dilaporkan
+                                </span>
+                            @endif
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">Tidak ada periode stok opname yang aktif</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

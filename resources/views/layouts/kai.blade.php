@@ -258,6 +258,73 @@
         });
       });
     </script>
-    @stack('script')s
+        <script>
+      // Form berclass "form-ajax" dikirim lewat AJAX. Kalau gagal, error tampil di bawah kolom
+      // dan modal tetap terbuka. Kalau berhasil, modal menutup lalu halaman dimuat ulang.
+      $(document).on('submit', 'form.form-ajax', function (e) {
+        e.preventDefault();
+
+        const $form = $(this);
+        const $modal = $form.closest('.modal');
+        const $btn = $form.find('button[type="submit"]');
+        const teksAsli = $btn.text();
+
+        const tampilkanUmum = function (pesan) {
+          $form.find('[data-error-umum]').removeClass('d-none').text(pesan);
+        };
+
+        $form.find('[data-error]').text('');
+        $form.find('[data-error-umum]').addClass('d-none').text('');
+        $form.find('.is-invalid').removeClass('is-invalid');
+        $btn.prop('disabled', true).text('Menyimpan...');
+
+        $.ajax({
+          url: $form.attr('action'),
+          type: 'POST',
+          data: $form.serialize(),
+          dataType: 'json',
+          success: function (res) {
+            if ($modal.length) {
+              const instance = bootstrap.Modal.getInstance($modal[0]);
+              if (instance) instance.hide();
+            }
+            swal({
+              icon: 'success',
+              title: 'Berhasil',
+              text: res.message,
+              timer: 1500,
+              buttons: false
+            }).then(function () {
+              location.reload();
+            });
+          },
+          error: function (xhr) {
+            if (xhr.status === 422 && xhr.responseJSON) {
+              const errors = xhr.responseJSON.errors || {};
+              let tampil = false;
+
+              $.each(errors, function (field, pesan) {
+                const $target = $form.find('[data-error="' + field + '"]');
+                if ($target.length) {
+                  $target.text(pesan[0]);
+                  $form.find('[name="' + field + '"]').addClass('is-invalid');
+                  tampil = true;
+                }
+              });
+
+              if (!tampil) {
+                tampilkanUmum(xhr.responseJSON.message || 'Data tidak valid.');
+              }
+            } else {
+              tampilkanUmum('Terjadi kesalahan pada server. Coba lagi.');
+            }
+          },
+          complete: function () {
+            $btn.prop('disabled', false).text(teksAsli);
+          }
+        });
+      });
+    </script>
+    @stack('script')
   </body>
 </html>

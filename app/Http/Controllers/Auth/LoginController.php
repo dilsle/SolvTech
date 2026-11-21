@@ -25,7 +25,6 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
-        // Pegawai nonaktif tidak boleh masuk
         if ($user->role === 'pegawai' && optional($user->pegawai)->status !== 'Aktif') {
             $this->guard()->logout();
             $request->session()->invalidate();
@@ -36,7 +35,6 @@ class LoginController extends Controller
             ]);
         }
 
-        // Buang tujuan lama supaya tidak nyasar ke halaman role lain
         $request->session()->forget('url.intended');
 
         return redirect()->to(

@@ -50,12 +50,19 @@ Route::middleware(['auth', 'role:admin,pegawai'])->prefix('master-data')->name('
 
 // Transaksi keluar: admin & pegawai sama-sama bisa lihat dan tambah
 Route::middleware(['auth', 'role:admin,pegawai'])->group(function () {
+    Route::get('transaksi-keluar/{nomor_transaksi}/struk', [TransaksiKeluarController::class, 'struk'])->name('transaksi-keluar.struk');
     Route::resource('transaksi-keluar', TransaksiKeluarController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('get-data/varian-produk', [VarianProdukController::class, 'getAllVarianJson'])->name('get-data.varian-produk');
 });
 
 Route::middleware(['auth', 'role:admin,pegawai'])->group(function () {
     Route::get('/kartu-stok/{nomor_sku}', [KartuStokController::class, 'kartuStok'])->name('kartu-stok');
+});
+
+// Stok opname: admin & pegawai hanya bisa membuka form input dan menyimpan laporan per barang
+Route::middleware(['auth', 'role:admin,pegawai'])->prefix('stok-opname')->name('stok-opname.')->group(function () {
+    Route::get('input-data/create', [InputStokOpnameController::class, 'create'])->name('input-data.create');
+    Route::put('input-data/{input_datum}', [InputStokOpnameController::class, 'update'])->name('input-data.update');
 });
 // ==========================================
 // AREA ADMIN SAJA
@@ -103,7 +110,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::prefix('stok-opname')->name('stok-opname.')->group(function () {
         Route::resource('periode', PeriodeStokOpnameController::class);
-        Route::resource('input-data', InputStokOpnameController::class);
+        Route::resource('input-data', InputStokOpnameController::class)->except('create', 'update');
         Route::post('/update-produk', [ItemStokOpnameController::class, 'updateProduk'])->name('update-produk');
     });
 });

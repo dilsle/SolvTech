@@ -207,6 +207,13 @@ class Sidebar extends Component
 
                 ]
             ],
+            [
+                'label' => 'Stok Opname',
+                'route' => 'stok-opname.input-data.create',
+                'is_active' => request()->routeIs('stok-opname.input-data.*'),
+                'icon' => 'fas fa-pen',
+                'is_dropdown' => false
+            ]
 
         ];
         $this->links = (request()->user()->role === 'pegawai')
