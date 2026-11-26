@@ -15,6 +15,8 @@ class Transaksi extends Model
         'petugas',
         'pengirim',
         'penerima',
+        'uang_dibayar',
+        'kembalian',
         'kontak'
     ];
 

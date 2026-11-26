@@ -27,6 +27,7 @@ class storeTransaksiKeluarRequest extends FormRequest
             'kontak'     => 'required|string|max:255',
             'keterangan' => 'nullable|string',
             'items'      => 'required|array|min:1',
+            'uang_dibayar' => 'required|integer|min:0',
         ];
     }
 
@@ -36,6 +37,8 @@ class storeTransaksiKeluarRequest extends FormRequest
             'penerima.required' => 'Field penerima wajib diisi.',
             'kontak.required'   => 'Field kontak wajib diisi.',
             'items.required'    => 'Minimal harus ada satu produk yang ditambahkan dalam transaksi.',
+            'uang_dibayar.required' => 'Uang yang dibayar wajib diisi.',
+            'uang_dibayar.integer'  => 'Uang yangdibayar harus berupa angka.',
         ];
     }
 }

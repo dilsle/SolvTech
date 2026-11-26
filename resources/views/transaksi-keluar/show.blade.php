@@ -18,6 +18,8 @@
         <x-meta-item label="Kontak" value="{{ $transaksi->kontak }}" />
         <x-meta-item label="Jumlah Barang" value="{{ number_format($transaksi->jumlah_barang) }} pcs" />
         <x-meta-item label="Total Harga" value="Rp. {{ number_format($transaksi->total_harga) }}" />
+        <x-meta-item label="Uang Dibayar" value="Rp. {{ number_format($transaksi->uang_dibayar) }}" />
+        <x-meta-item label="Kembalian" value="Rp. {{ number_format($transaksi->kembalian) }}" />
         <x-meta-item label="Keterangan" value="{{ $transaksi->keterangan }}" />
         <x-meta-item label="Petugas" value="{{ $transaksi->petugas }}" />
         <x-meta-item label="Tanggal Transaksi" value="{{ $transaksi->formated_date }}" />

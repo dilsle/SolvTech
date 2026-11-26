@@ -97,6 +97,17 @@
             <span>TOTAL</span>
             <span>Rp {{ number_format($transaksi->total_harga) }}</span>
         </div>
+
+        @if (!is_null($transaksi->uang_dibayar))
+            <div class="baris">
+                <span>Bayar</span>
+                <span>Rp {{ number_format($transaksi->uang_dibayar) }}</span>
+            </div>
+            <div class="baris bold">
+                <span>Kembali</span>
+                <span>Rp {{ number_format($transaksi->kembalian) }}</span>
+            </div>
+        @endif
         <div class="baris">
             <span>Jumlah barang</span>
             <span>{{ number_format($barang->sum('qty')) }} pcs</span>
