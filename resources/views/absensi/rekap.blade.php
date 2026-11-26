@@ -35,7 +35,6 @@
             </div>
             <div class="col-md-4 d-flex gap-1 mb-2">
                 <button type="submit" class="btn btn-black btn-round w-50">Filter</button>
-                <button type="button" onclick="window.print()" class="btn btn-primary btn-round w-50"><i class="fa fa-print"></i> Cetak</button>
             </div>
         </form>
 

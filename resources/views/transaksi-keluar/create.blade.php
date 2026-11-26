@@ -16,7 +16,7 @@
                     <input type="text" name="kontak" id="kontak" class="form-control">
                 </div>
                 <div class="form-group mt-1">
-                    <label for="keterangan" class="form-label">Keterangan</label>
+                    <label for="keterangan" class="form-label">keterangan</label>
                     <textarea name="keterangan" id="keterangan" cols="30" rows="2" class="form-control"></textarea>
                 </div>
             </div>
@@ -62,6 +62,19 @@
                     <th id="grand-total">0</th>
                 </tr>
                 <tr>
+                    <th colspan="5" class="text-end align-middle">
+                        Uang Dibayar
+                        <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="btn-uang-pas">Uang Pas</button>
+                    </th>
+                    <th style="min-width: 180px">
+                        <input type="text" inputmode="numeric" id="uang-dibayar" class="form-control" placeholder="0" autocomplete="off">
+                    </th>
+                </tr>
+                <tr>
+                    <th colspan="5" class="text-end">Kembalian</th>
+                    <th id="kembalian">0</th>
+                </tr>
+                <tr>
                     <th colspan="6" class="text-end">
                         <button type="button" class="btn btn-primary" id="btn-simpan-transaksi">Simpan Transaksi</button>
                     </th>
@@ -74,10 +87,43 @@
 @endsection
 @push('script')
     <script>
-    $(document).ready(function () {$("#alert-danger").hide();
-        const numberFormat = new Intl.NumberFormat('id-ID')
+    $(document).ready(function () {
+        $("#alert-danger").hide();
+        const numberFormat = new Intl.NumberFormat('id-ID');
         let selectedOption = {};
         let selectedProduk = [];
+
+        function hitungTotal() {
+            return selectedProduk.reduce((total, item) => total + item.subTotal, 0);
+        }
+
+        function ambilUangDibayar() {
+            return parseInt(($("#uang-dibayar").val() || '').replace(/\D/g, '')) || 0;
+        }
+
+        function hitungKembalian() {
+            const selisih = ambilUangDibayar() - hitungTotal();
+            const $kembalian = $("#kembalian");
+
+            if (selisih >= 0) {
+                $kembalian.text(numberFormat.format(selisih)).removeClass('text-danger');
+            } else {
+                $kembalian.text('Kurang ' + numberFormat.format(-selisih)).addClass('text-danger');
+            }
+        }
+
+        // Format ribuan otomatis saat mengetik uang dibayar
+        $("#uang-dibayar").on("input", function () {
+            const angka = $(this).val().replace(/\D/g, '');
+            $(this).val(angka ? numberFormat.format(parseInt(angka)) : '');
+            hitungKembalian();
+        });
+
+        $("#btn-uang-pas").on("click", function () {
+            const total = hitungTotal();
+            $("#uang-dibayar").val(total ? numberFormat.format(total) : '');
+            hitungKembalian();
+        });
 
         $('#select-produk').select2({
             placeholder: 'Pilih Produk',
@@ -88,29 +134,26 @@
                 url: "{{ route('get-data.varian-produk') }}",
                 dataType: 'json',
                 delay: 250,
-                data: function (params){
-                    let query = {
-                        search: params.term
-                    }
-                    return query
+                data: function (params) {
+                    return { search: params.term };
                 },
                 processResults: function (data) {
                     return {
-                        results: data.map((item)=> {
+                        results: data.map((item) => {
                             return {
                                 id: item.id,
                                 text: item.text,
-                                harga:item.harga,
-                                stok:item.stok,
+                                harga: item.harga,
+                                stok: item.stok,
                                 nomor_sku: item.nomor_sku
-                            }
+                            };
                         })
-                    }
+                    };
                 }
             }
         });
 
-        $('#select-produk').on('select2:select', function(e){
+        $('#select-produk').on('select2:select', function (e) {
             let data = e.params.data;
             $("#harga").val(data.harga);
             $("#stok").val(data.stok);
@@ -122,31 +165,20 @@
             let qty = parseInt($("#qty").val());
             let harga = parseInt($("#harga").val());
 
-            if(!selectedOption.id || !qty || !harga) {
-                swal({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Input belum lengkap',
-                    timer: 3000
-                });
+            if (!selectedOption.id || !qty || !harga) {
+                swal({ icon: 'warning', title: 'Perhatian', text: 'Input belum lengkap', timer: 3000 });
                 return;
             }
 
-            if(qty < 1 || harga < 1) {
-                swal({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Qty atau Harga tidak boleh kurang dari 1',
-                    timer: 3000
-                });
+            if (qty < 1 || harga < 1) {
+                swal({ icon: 'warning', title: 'Perhatian', text: 'Qty atau Harga tidak boleh kurang dari 1', timer: 3000 });
                 return;
             }
 
             let subTotal = qty * harga;
-
             let existingItem = selectedProduk.find(item => item.nomor_sku === selectedOption.nomor_sku);
 
-            if(existingItem) {
+            if (existingItem) {
                 existingItem.qty = parseInt(existingItem.qty) + parseInt(qty);
                 existingItem.harga = parseInt(harga);
                 existingItem.subTotal = existingItem.qty * existingItem.harga;
@@ -155,8 +187,8 @@
                     text: selectedOption.text,
                     nomor_sku: selectedOption.nomor_sku,
                     qty: qty,
-                    harga:harga,
-                    subTotal:subTotal
+                    harga: harga,
+                    subTotal: subTotal
                 });
             }
 
@@ -177,8 +209,8 @@
             let tableBody = $("#table-produk tbody");
             tableBody.empty();
 
-            selectedProduk.forEach((item, index)=>{
-                let row = `
+            selectedProduk.forEach((item, index) => {
+                tableBody.append(`
                 <tr>
                     <td class="text-center">${index + 1}</td>
                     <td>${item.text}</td>
@@ -191,33 +223,37 @@
                         </button>
                     </td>
                 </tr>
-                `;
-                tableBody.append(row);
+                `);
             });
 
-            if(selectedProduk.length === 0) {
-                tableBody.append(`<tr><td colspan="7" class="text-center">Tidak ada data produk</td></tr>`);
+            if (selectedProduk.length === 0) {
+                tableBody.append(`<tr><td colspan="6" class="text-center">Tidak ada data produk</td></tr>`);
             }
 
-            let grandTotal = selectedProduk.reduce((total, item)=> total + item.subTotal, 0);
-            $("#grand-total").text(numberFormat.format(grandTotal));
+            $("#grand-total").text(numberFormat.format(hitungTotal()));
+            hitungKembalian();
         }
 
         renderTable();
 
-       $("#btn-simpan-transaksi").on("click", function (e) {
+        $("#btn-simpan-transaksi").on("click", function (e) {
             e.preventDefault();
             $("#alert-danger").hide().empty();
 
-            if(selectedProduk.length === 0){
-                swal({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Wajib menuliskan 1 produk yang akan dicatat',
-                    timer: 3000
-                });
+            if (selectedProduk.length === 0) {
+                swal({ icon: 'warning', title: 'Perhatian', text: 'Wajib menuliskan 1 produk yang akan dicatat', timer: 3000 });
                 return;
             }
+
+            const dibayar = ambilUangDibayar();
+
+            if (dibayar < hitungTotal()) {
+                swal({ icon: 'warning', title: 'Perhatian', text: 'Uang yang dibayarkan kurang dari total belanja', timer: 3000 });
+                return;
+            }
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).text('Menyimpan...');
 
             $.ajax({
                 method: "POST",
@@ -228,6 +264,7 @@
                     penerima: $("#penerima").val(),
                     kontak: $("#kontak").val(),
                     keterangan: $("#keterangan").val(),
+                    uang_dibayar: dibayar,
                 },
                 success: function (response) {
                     if (response.success) {
@@ -236,7 +273,7 @@
                             title: 'Berhasil',
                             text: 'Transaksi Keluar berhasil ditambahkan',
                             timer: 1500,
-                            showConfirmButton: false
+                            buttons: false
                         });
                         setTimeout(function () {
                             window.location.href = response.redirect_url + '?cetak=1';
@@ -244,11 +281,12 @@
                     }
                 },
                 error: function (xhr) {
+                    $btn.prop('disabled', false).text('Simpan Transaksi');
+
                     const errors = xhr.responseJSON?.errors;
-                    if(errors){
+                    if (errors) {
                         renderError(errors);
                     } else {
-                        // Menangkap error 500 dari server agar ketahuan salahnya di mana
                         swal({
                             icon: 'error',
                             title: 'Gagal',
@@ -267,7 +305,7 @@
             Object.values(errors).forEach(err => {
                 err.forEach(msg => {
                     alertBox.append(`<p class="mb-0">${msg}</p>`);
-                })
+                });
             });
             alertBox.show();
         }

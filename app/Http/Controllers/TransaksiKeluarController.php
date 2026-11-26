@@ -195,12 +195,22 @@ class TransaksiKeluarController extends Controller
                 }
             }
 
+            // Cek pembayaran terhadap total yang dihitung server
+            $uangDibayar = (int) $request->uang_dibayar;
+
+            if ($uangDibayar < $totalHarga) {
+                throw ValidationException::withMessages([
+                    'uang_dibayar' => 'Uang yang dibayarkan kurang dari total belanja (Rp ' . number_format($totalHarga, 0, ',', '.') . ').',
+                ]);
+            }
             // Buat transaksi setelah semua stok berhasil divalidasi.
             $transaksi = Transaksi::create([
                 'nomor_transaksi' => $nomorTransaksi,
                 'jenis_transaksi' => $this->jenisTransaksi,
                 'jumlah_barang' => array_sum(array_column($alokasiItems, 'qty')),
                 'total_harga' => $totalHarga,
+                'uang_dibayar' => $uangDibayar,
+                'kembalian' => $uangDibayar - $totalHarga,
                 'keterangan' => $request->keterangan,
                 'petugas' => Auth::user()->name,
                 'penerima' => $request->penerima,
